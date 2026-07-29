@@ -1,44 +1,28 @@
-import { useEffect, useState } from 'react';
-import { ChevronDown, ChevronLeft, Search, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, ChevronLeft, Search, Trash2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import { isCompactViewport, useCompactLayout } from '@/hooks/useCompactLayout';
 
 interface LayerPanelProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   visibleLayers: { ancient: boolean; modern: boolean; red: boolean };
   onLayerToggle: (layer: 'ancient' | 'modern' | 'red') => void;
   onSearch: (query: string) => void;
   onClear: () => void;
 }
 
-export default function LayerPanel({ visibleLayers, onLayerToggle, onSearch, onClear }: LayerPanelProps) {
-  const isCompactLayout = useCompactLayout();
-  const [collapsed, setCollapsed] = useState(isCompactViewport);
+export default function LayerPanel({ open, onOpenChange, visibleLayers, onLayerToggle, onSearch, onClear }: LayerPanelProps) {
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    if (isCompactLayout) setCollapsed(true);
-  }, [isCompactLayout]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(searchQuery);
   };
 
-  if (collapsed) {
-    return (
-      <button
-        onClick={() => setCollapsed(false)}
-        aria-label="打开图层筛选"
-        title="图层筛选"
-        className="absolute top-3 left-[72px] z-[1001] w-11 h-11 lg:top-4 lg:left-[68px] lg:w-9 lg:h-9 flex items-center justify-center glass-panel rounded-full lg:rounded hover:bg-gold/10 transition-colors active:scale-95"
-      >
-        <SlidersHorizontal size={17} className="text-gold-dark" />
-      </button>
-    );
-  }
+  if (!open) return null;
 
   return (
-    <div className="map-layer-panel absolute inset-x-3 bottom-3 z-[1001] max-h-[62%] w-auto glass-panel rounded-xl overflow-x-hidden overflow-y-auto animate-in slide-in-from-bottom-4 duration-300 lg:inset-x-auto lg:bottom-auto lg:top-4 lg:left-[68px] lg:max-h-[calc(100%-2rem)] lg:w-[258px] lg:rounded-lg lg:slide-in-from-left-4">
+    <div className="map-layer-panel absolute inset-x-3 bottom-3 z-[1001] max-h-[62%] w-auto glass-panel rounded-xl overflow-x-hidden overflow-y-auto animate-in slide-in-from-bottom-4 duration-300 lg:inset-x-auto lg:bottom-auto lg:top-4 lg:left-4 lg:max-h-[calc(100%-2rem)] lg:w-[258px] lg:rounded-lg lg:slide-in-from-left-4">
       {/* Panel header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-gold/10">
         <div className="flex items-center gap-2">
@@ -48,7 +32,7 @@ export default function LayerPanel({ visibleLayers, onLayerToggle, onSearch, onC
           <h3 className="text-[13px] font-semibold font-serif tracking-wide" style={{ color: '#3d2e0a' }}>图层筛选</h3>
         </div>
         <button
-          onClick={() => setCollapsed(true)}
+          onClick={() => onOpenChange(false)}
           aria-label="收起图层筛选"
           className="w-9 h-9 lg:w-6 lg:h-6 flex items-center justify-center rounded hover:bg-gold/10 transition-colors active:scale-95"
         >

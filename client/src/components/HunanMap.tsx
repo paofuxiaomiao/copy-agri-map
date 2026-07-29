@@ -3,7 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { CulturePoint } from '@/data/points';
 import { hunanBoundary } from '@/data/hunan-boundary';
-import { Plus, Minus, Locate } from 'lucide-react';
+import { Plus, Minus, Locate, SlidersHorizontal } from 'lucide-react';
 
 interface HunanMapProps {
   points: CulturePoint[];
@@ -11,6 +11,8 @@ interface HunanMapProps {
   focusRequest: { pointId: string; nonce: number } | null;
   onPointSelect: (point: CulturePoint) => void;
   visibleLayers: { ancient: boolean; modern: boolean; red: boolean };
+  layerPanelOpen: boolean;
+  onLayerPanelOpen: () => void;
 }
 
 // Tuned so the whole province sits visually centred in the map viewport
@@ -132,7 +134,15 @@ function useMiniMapGeometry() {
   }, []);
 }
 
-export default function HunanMap({ points, selectedPoint, focusRequest, onPointSelect, visibleLayers }: HunanMapProps) {
+export default function HunanMap({
+  points,
+  selectedPoint,
+  focusRequest,
+  onPointSelect,
+  visibleLayers,
+  layerPanelOpen,
+  onLayerPanelOpen,
+}: HunanMapProps) {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
@@ -390,33 +400,41 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
       {/* Parchment vignette overlay */}
       <div className="map-parchment-overlay" />
 
-      {/* Custom map controls */}
-      <div className="absolute top-3 left-3 lg:top-4 lg:left-4 z-[400] flex flex-col map-control-group">
-        <button onClick={handleZoomIn} className="map-control-btn" title="放大" aria-label="放大">
-          <Plus size={16} />
-        </button>
-        <div className="map-control-divider" />
-        <button onClick={handleZoomOut} className="map-control-btn" title="缩小" aria-label="缩小">
-          <Minus size={16} />
-        </button>
-        <div className="map-control-divider" />
-        <button onClick={handleReset} className="map-control-btn" title="回到全省视图" aria-label="回到全省视图">
-          <Locate size={16} />
-        </button>
-      </div>
+      {/* A single tool rail owns this anchor, so controls cannot collide with the filter panel. */}
+      {!layerPanelOpen && (
+        <div className="absolute top-3 left-3 lg:top-4 lg:left-4 z-[400] flex flex-row lg:flex-col map-control-group animate-in fade-in zoom-in-95 duration-200">
+          <button onClick={handleZoomIn} className="map-control-btn" title="放大" aria-label="放大">
+            <Plus size={16} />
+          </button>
+          <div className="map-control-divider" />
+          <button onClick={handleZoomOut} className="map-control-btn" title="缩小" aria-label="缩小">
+            <Minus size={16} />
+          </button>
+          <div className="map-control-divider" />
+          <button onClick={handleReset} className="map-control-btn" title="回到全省视图" aria-label="回到全省视图">
+            <Locate size={16} />
+          </button>
+          <div className="map-control-divider" />
+          <button onClick={onLayerPanelOpen} className="map-control-btn" title="图层筛选" aria-label="打开图层筛选">
+            <SlidersHorizontal size={16} />
+          </button>
+        </div>
+      )}
 
-      {/* Scale bar */}
-      <div className="hidden sm:flex absolute bottom-4 left-4 z-[400] items-end gap-0.5 text-xs text-earth/80 bg-white/75 backdrop-blur-[2px] px-2 py-1 rounded border border-gold/10 shadow-sm">
-        <span>0</span>
-        <div className="flex items-center">
-          <div className="w-12 h-0.5 bg-earth/60 mx-1" />
-          <span>50</span>
+      {/* The scale shares the same left dock and follows its visibility. */}
+      {!layerPanelOpen && (
+        <div className="hidden sm:flex absolute bottom-4 left-4 z-[400] items-end gap-0.5 text-xs text-earth/80 bg-white/75 backdrop-blur-[2px] px-2 py-1 rounded border border-gold/10 shadow-sm">
+          <span>0</span>
+          <div className="flex items-center">
+            <div className="w-12 h-0.5 bg-earth/60 mx-1" />
+            <span>50</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-12 h-0.5 bg-earth/60 mx-1" />
+            <span>100km</span>
+          </div>
         </div>
-        <div className="flex items-center">
-          <div className="w-12 h-0.5 bg-earth/60 mx-1" />
-          <span>100km</span>
-        </div>
-      </div>
+      )}
 
       {/* Mini map / overview inset with real Hunan outline */}
       <div className="hidden md:block absolute bottom-4 right-5 z-[400] mini-map-panel">
