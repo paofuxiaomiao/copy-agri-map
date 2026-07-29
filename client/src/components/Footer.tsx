@@ -1,6 +1,6 @@
 export default function Footer() {
   return (
-    <footer className="w-full flex-shrink-0 relative overflow-hidden footer-seamless">
+    <footer className="hidden lg:block w-full flex-shrink-0 relative overflow-hidden footer-seamless">
       {/* Subtle gold divider that separates modules from filing info without breaking the flow */}
       <div className="footer-divider mx-auto" />
 

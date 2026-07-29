@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Search, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ChevronDown, ChevronLeft, Search, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { isCompactViewport, useCompactLayout } from '@/hooks/useCompactLayout';
 
 interface LayerPanelProps {
   visibleLayers: { ancient: boolean; modern: boolean; red: boolean };
@@ -10,8 +11,13 @@ interface LayerPanelProps {
 }
 
 export default function LayerPanel({ visibleLayers, onLayerToggle, onSearch, onClear }: LayerPanelProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const isCompactLayout = useCompactLayout();
+  const [collapsed, setCollapsed] = useState(isCompactViewport);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (isCompactLayout) setCollapsed(true);
+  }, [isCompactLayout]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,15 +28,17 @@ export default function LayerPanel({ visibleLayers, onLayerToggle, onSearch, onC
     return (
       <button
         onClick={() => setCollapsed(false)}
-        className="absolute top-4 left-14 z-[1001] w-9 h-9 flex items-center justify-center glass-panel rounded hover:bg-gold/10 transition-colors"
+        aria-label="打开图层筛选"
+        title="图层筛选"
+        className="absolute top-3 left-16 z-[1001] w-11 h-11 lg:top-4 lg:left-14 lg:w-9 lg:h-9 flex items-center justify-center glass-panel rounded-full lg:rounded hover:bg-gold/10 transition-colors active:scale-95"
       >
-        <ChevronRight size={16} className="text-gold-dark" />
+        <SlidersHorizontal size={17} className="text-gold-dark" />
       </button>
     );
   }
 
   return (
-    <div className="absolute top-4 left-14 z-[1001] max-h-[calc(100%-2rem)] w-[258px] glass-panel rounded-lg overflow-x-hidden overflow-y-auto animate-in slide-in-from-left-4 duration-300">
+    <div className="map-layer-panel absolute inset-x-3 bottom-3 z-[1001] max-h-[62%] w-auto glass-panel rounded-xl overflow-x-hidden overflow-y-auto animate-in slide-in-from-bottom-4 duration-300 lg:inset-x-auto lg:bottom-auto lg:top-4 lg:left-14 lg:max-h-[calc(100%-2rem)] lg:w-[258px] lg:rounded-lg lg:slide-in-from-left-4">
       {/* Panel header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-gold/10">
         <div className="flex items-center gap-2">
@@ -41,14 +49,16 @@ export default function LayerPanel({ visibleLayers, onLayerToggle, onSearch, onC
         </div>
         <button
           onClick={() => setCollapsed(true)}
-          className="w-6 h-6 flex items-center justify-center rounded hover:bg-gold/10 transition-colors active:scale-95"
+          aria-label="收起图层筛选"
+          className="w-9 h-9 lg:w-6 lg:h-6 flex items-center justify-center rounded hover:bg-gold/10 transition-colors active:scale-95"
         >
-          <ChevronLeft size={14} className="text-[#8a7a5a]" />
+          <ChevronDown size={17} className="text-[#8a7a5a] lg:hidden" />
+          <ChevronLeft size={14} className="hidden text-[#8a7a5a] lg:block" />
         </button>
       </div>
 
       {/* Layer controls */}
-      <div className="px-4 py-3 space-y-1">
+      <div className="px-4 py-2.5 lg:py-3 space-y-1">
         <p className="text-xs font-medium text-muted-foreground mb-2">图层控制</p>
         <LayerToggle
           color="#8B6914"
@@ -71,7 +81,7 @@ export default function LayerPanel({ visibleLayers, onLayerToggle, onSearch, onC
       </div>
 
       {/* Search */}
-      <div className="px-4 py-3 border-t border-gold/10">
+      <div className="px-4 py-2.5 lg:py-3 border-t border-gold/10">
         <p className="text-xs font-medium text-muted-foreground mb-2">点位搜索</p>
         <form onSubmit={handleSearch} className="relative">
           <input
@@ -79,16 +89,16 @@ export default function LayerPanel({ visibleLayers, onLayerToggle, onSearch, onC
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="搜索点位名称..."
-            className="w-full h-8 pl-3 pr-8 text-xs bg-white/60 border border-gold/15 rounded-md focus:outline-none focus:border-gold/40 focus:ring-1 focus:ring-gold/15 placeholder:text-muted-foreground/50"
+            className="w-full h-10 lg:h-8 pl-3 pr-10 lg:pr-8 text-xs bg-white/60 border border-gold/15 rounded-md focus:outline-none focus:border-gold/40 focus:ring-1 focus:ring-gold/15 placeholder:text-muted-foreground/50"
           />
-          <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2">
+          <button type="submit" aria-label="搜索点位" className="absolute right-0 top-0 h-full w-10 lg:w-8 flex items-center justify-center">
             <Search size={13} className="text-muted-foreground" />
           </button>
         </form>
       </div>
 
       {/* Legend */}
-      <div className="px-4 py-3 border-t border-gold/10">
+      <div className="hidden lg:block px-4 py-3 border-t border-gold/10">
         <p className="text-xs font-medium text-muted-foreground mb-2">图例说明</p>
         <div className="space-y-1.5">
           <LegendItem color="#8B6914" label="古代农耕遗址" period="远古—清代" />
@@ -98,10 +108,10 @@ export default function LayerPanel({ visibleLayers, onLayerToggle, onSearch, onC
       </div>
 
       {/* Clear button */}
-      <div className="px-4 py-3 border-t border-gold/10">
+      <div className="px-4 py-2.5 lg:py-3 border-t border-gold/10">
         <button
           onClick={() => { onClear(); setSearchQuery(''); }}
-          className="w-full flex items-center justify-center gap-1.5 h-8 text-xs text-muted-foreground border border-gold/15 rounded-md hover:bg-gold/5 hover:text-gold-dark transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 h-10 lg:h-8 text-xs text-muted-foreground border border-gold/15 rounded-md hover:bg-gold/5 hover:text-gold-dark transition-colors"
         >
           <Trash2 size={12} />
           清空筛选
@@ -113,12 +123,12 @@ export default function LayerPanel({ visibleLayers, onLayerToggle, onSearch, onC
 
 function LayerToggle({ color, label, checked, onChange }: { color: string; label: string; checked: boolean; onChange: () => void }) {
   return (
-    <div className="flex items-center justify-between py-1.5">
+    <div className="flex min-h-11 lg:min-h-0 items-center justify-between py-2 lg:py-1.5">
       <div className="flex items-center gap-2">
         <div className="w-3 h-3 rounded-full border-2 border-white shadow-sm" style={{ background: color }} />
         <span className="text-xs text-foreground">{label}</span>
       </div>
-      <Switch checked={checked} onCheckedChange={onChange} className="scale-75" />
+      <Switch checked={checked} onCheckedChange={onChange} className="lg:scale-75" />
     </div>
   );
 }

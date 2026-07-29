@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import HunanMap from '@/components/HunanMap';
 import LayerPanel from '@/components/LayerPanel';
@@ -12,10 +12,14 @@ import TimelinePage from './TimelinePage';
 import RoutesPage from './RoutesPage';
 import SolarTermsPage from './SolarTermsPage';
 import { AnimatePresence, motion } from 'framer-motion';
+import { isCompactViewport, useCompactLayout } from '@/hooks/useCompactLayout';
 
 export default function Home() {
+  const isCompactLayout = useCompactLayout();
   const [activeNav, setActiveNav] = useState('map');
-  const [selectedPoint, setSelectedPoint] = useState<CulturePoint | null>(culturePoints[0]);
+  const [selectedPoint, setSelectedPoint] = useState<CulturePoint | null>(() => (
+    isCompactViewport() ? null : culturePoints[0]
+  ));
   const [focusRequest, setFocusRequest] = useState<{ pointId: string; nonce: number } | null>(null);
   const [visibleLayers, setVisibleLayers] = useState({
     ancient: true,
@@ -45,6 +49,14 @@ export default function Home() {
     setSelectedPoint(null);
     setFocusRequest(null);
   }, []);
+
+  const previousCompactLayoutRef = useRef(isCompactLayout);
+  useEffect(() => {
+    if (isCompactLayout && !previousCompactLayoutRef.current) {
+      clearSelection();
+    }
+    previousCompactLayoutRef.current = isCompactLayout;
+  }, [clearSelection, isCompactLayout]);
 
   const handlePointSelect = useCallback((point: CulturePoint) => {
     focusPoint(point);
@@ -101,7 +113,7 @@ export default function Home() {
   }, [focusPoint]);
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="h-[100dvh] min-h-[100svh] flex flex-col bg-background overflow-hidden">
       <Header
         activeNav={activeNav}
         onNavChange={handleNavChange}

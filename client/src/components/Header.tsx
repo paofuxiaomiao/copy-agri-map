@@ -1,4 +1,4 @@
-import { Search, Share2 } from 'lucide-react';
+import { CalendarDays, History, Landmark, MapPinned, Route, Search, Share2 } from 'lucide-react';
 import { useState } from 'react';
 import { assetUrl } from '@/lib/assets';
 
@@ -9,11 +9,11 @@ interface HeaderProps {
 }
 
 const navItems = [
-  { id: 'map', label: '地图浏览' },
-  { id: 'routes', label: '主题线路' },
-  { id: 'timeline', label: '发展脉络' },
-  { id: 'artifacts', label: '重要文物' },
-  { id: 'solar', label: '节气日历' },
+  { id: 'map', label: '地图', desktopLabel: '地图浏览', icon: MapPinned },
+  { id: 'routes', label: '线路', desktopLabel: '主题线路', icon: Route },
+  { id: 'timeline', label: '脉络', desktopLabel: '发展脉络', icon: History },
+  { id: 'artifacts', label: '文物', desktopLabel: '重要文物', icon: Landmark },
+  { id: 'solar', label: '节气', desktopLabel: '节气日历', icon: CalendarDays },
 ];
 
 export default function Header({ activeNav, onNavChange, onSearch }: HeaderProps) {
@@ -28,7 +28,7 @@ export default function Header({ activeNav, onNavChange, onSearch }: HeaderProps
     <header className="sticky top-0 z-50 w-full">
       {/* Top navigation - museum atlas header */}
       <div className="border-b border-gold/15" style={{ background: 'linear-gradient(180deg, #faf6ee 0%, #f6f1e8 100%)' }}>
-        <div className="flex min-w-0 items-center justify-between gap-2 px-3 sm:px-5 h-[56px]">
+        <div className="mobile-safe-top flex min-w-0 items-center justify-between gap-2 px-3 sm:px-5 h-[54px] lg:h-[56px]">
           {/* Brand area - seal + literary title */}
           <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3.5">
             <div className="w-9 h-9 sm:w-11 sm:h-11 flex-shrink-0 relative logo-stamp-shell">
@@ -43,7 +43,7 @@ export default function Header({ activeNav, onNavChange, onSearch }: HeaderProps
               />
             </div>
             <div className="min-w-0 border-l border-gold/20 pl-2.5 sm:pl-3.5">
-              <h1 className="truncate whitespace-nowrap text-[13px] sm:text-[17px] font-bold font-serif tracking-[0.08em] sm:tracking-[0.15em] leading-tight" style={{ color: '#3d2e0a' }}>
+              <h1 className="truncate whitespace-nowrap text-[14px] sm:text-[17px] font-bold font-serif tracking-[0.06em] sm:tracking-[0.15em] leading-tight" style={{ color: '#3d2e0a' }}>
                 湖南省农耕文化地图
               </h1>
               <p className="hidden sm:block truncate whitespace-nowrap text-[11px] tracking-[0.08em] mt-0.5" style={{ color: '#8a7a5a' }}>
@@ -64,7 +64,7 @@ export default function Header({ activeNav, onNavChange, onSearch }: HeaderProps
                     : 'text-[#8a7a5a] hover:text-[#5c4a1e]'
                 }`}
               >
-                {item.label}
+                {item.desktopLabel}
                 {activeNav === item.id && (
                   <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-5 h-[2px] rounded-full" style={{ background: '#8B6914' }} />
                 )}
@@ -74,7 +74,7 @@ export default function Header({ activeNav, onNavChange, onSearch }: HeaderProps
 
           {/* Search and share - archival controls */}
           <div className="flex flex-shrink-0 items-center gap-2.5">
-            <form onSubmit={handleSearch} className="hidden md:flex items-center">
+            <form onSubmit={handleSearch} className="hidden lg:flex items-center">
               <div className="relative">
                 <input
                   type="text"
@@ -91,7 +91,7 @@ export default function Header({ activeNav, onNavChange, onSearch }: HeaderProps
             </form>
             <button
               aria-label="分享"
-              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs font-medium font-serif border rounded hover:shadow-sm transition-all duration-200 active:scale-97"
+              className="flex w-10 h-10 lg:w-auto lg:h-auto items-center justify-center gap-1.5 px-2.5 sm:px-3.5 lg:py-1.5 text-xs font-medium font-serif border rounded hover:shadow-sm transition-all duration-200 active:scale-97"
               style={{ color: '#5c4a1e', borderColor: 'rgba(139,105,20,0.25)', borderRadius: '3px' }}
             >
               <Share2 size={13} />
@@ -101,8 +101,35 @@ export default function Header({ activeNav, onNavChange, onSearch }: HeaderProps
         </div>
       </div>
 
+      {/* Compact navigation - large touch targets, always available below desktop */}
+      <nav
+        className="lg:hidden grid grid-cols-5 h-[44px] border-b border-gold/10 px-1"
+        style={{ background: 'rgba(255,253,248,0.94)', backdropFilter: 'blur(12px)' }}
+        aria-label="移动端主导航"
+      >
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeNav === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onNavChange(item.id)}
+              aria-current={isActive ? 'page' : undefined}
+              className={`relative flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-md font-serif transition-colors ${
+                isActive ? 'text-[#5c4310]' : 'text-[#8a7a5a]'
+              }`}
+            >
+              <Icon size={16} strokeWidth={isActive ? 2 : 1.6} />
+              <span className="text-[10px] leading-none">{item.label}</span>
+              {isActive && <span className="absolute bottom-0.5 h-0.5 w-5 rounded-full bg-[#8B6914]" />}
+            </button>
+          );
+        })}
+      </nav>
+
       {/* Stats bar - catalogue index feel */}
-      <div className="border-b border-gold/10" style={{ background: 'rgba(255,253,248,0.88)', backdropFilter: 'blur(10px)' }}>
+      <div className="hidden lg:block border-b border-gold/10" style={{ background: 'rgba(255,253,248,0.88)', backdropFilter: 'blur(10px)' }}>
         <div className="flex items-center justify-between sm:justify-center gap-1 sm:gap-6 lg:gap-10 px-3 sm:px-6 h-[34px]">
           <StatItem icon={<PinIcon />} label="文化点位" value={128} unit="处" />
           <StatItem icon={<RouteIcon />} label="主题线路" value={3} unit="条" />

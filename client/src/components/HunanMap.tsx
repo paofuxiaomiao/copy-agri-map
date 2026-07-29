@@ -39,6 +39,20 @@ function clampToBounds(lat: number, lng: number): [number, number] {
   return [clampedLat, clampedLng];
 }
 
+function getFocusTarget(map: L.Map, point: CulturePoint, zoom: number): [number, number] {
+  const [lat, lng] = clampToBounds(point.latitude, point.longitude);
+  const markerPoint = map.project([lat, lng], zoom);
+  const mapSize = map.getSize();
+  const compactLandscape = mapSize.x < 1024 && mapSize.x > mapSize.y * 1.35;
+  const focusOffset = compactLandscape
+    ? L.point(130, 0)
+    : mapSize.x < 1024
+      ? L.point(0, Math.min(220, mapSize.y * 0.3))
+      : L.point(72, 0);
+  const rawCenter = map.unproject(markerPoint.add(focusOffset), zoom);
+  return clampToBounds(rawCenter.lat, rawCenter.lng);
+}
+
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, character => ({
     '&': '&amp;',
@@ -131,6 +145,8 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
   // Stable callback ref
   const onPointSelectRef = useRef(onPointSelect);
   onPointSelectRef.current = onPointSelect;
+  const selectedPointRef = useRef(selectedPoint);
+  selectedPointRef.current = selectedPoint;
 
   const mini = useMiniMapGeometry();
 
@@ -221,8 +237,31 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
       setMapReady(true);
     });
 
+    let resizeFrame: number | null = null;
+    let lastObservedWidth = mapContainerRef.current.clientWidth;
+    let lastObservedHeight = mapContainerRef.current.clientHeight;
+    const resizeObserver = new ResizeObserver(([entry]) => {
+      const nextWidth = Math.round(entry.contentRect.width);
+      const nextHeight = Math.round(entry.contentRect.height);
+      if (nextWidth === lastObservedWidth && nextHeight === lastObservedHeight) return;
+      lastObservedWidth = nextWidth;
+      lastObservedHeight = nextHeight;
+      if (resizeFrame !== null) cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => {
+        resizeFrame = null;
+        map.invalidateSize({ pan: false });
+        const currentPoint = selectedPointRef.current;
+        if (!currentPoint) return;
+        const zoom = map.getZoom();
+        map.setView(getFocusTarget(map, currentPoint, zoom), zoom, { animate: false });
+      });
+    });
+    resizeObserver.observe(mapContainerRef.current);
+
     return () => {
       cancelAnimationFrame(readyFrame);
+      resizeObserver.disconnect();
+      if (resizeFrame !== null) cancelAnimationFrame(resizeFrame);
       if (focusFrameRef.current !== null) {
         cancelAnimationFrame(focusFrameRef.current);
         focusFrameRef.current = null;
@@ -306,11 +345,9 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
     focusFrameRef.current = requestAnimationFrame(() => {
       focusFrameRef.current = null;
       if (!mapRef.current || lastFocusNonceRef.current !== focusRequest.nonce) return;
-      // Shift the center slightly east so the marker stays clear of the detail card.
-      const [lat, lng] = clampToBounds(point.latitude, point.longitude);
-      const markerPoint = map.project([lat, lng], FOCUS_ZOOM);
-      const rawCenter = map.unproject(markerPoint.add([72, 0]), FOCUS_ZOOM);
-      const target = clampToBounds(rawCenter.lat, rawCenter.lng);
+      // Desktop detail sits on the right; compact detail is a bottom sheet.
+      // Offset the map in the corresponding direction to keep the marker clear.
+      const target = getFocusTarget(map, point, FOCUS_ZOOM);
       map.flyTo(target, FOCUS_ZOOM, { duration: 0.9, easeLinearity: 0.2 });
     });
 
@@ -354,7 +391,7 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
       <div className="map-parchment-overlay" />
 
       {/* Custom map controls */}
-      <div className="absolute top-4 left-4 z-[400] flex flex-col map-control-group">
+      <div className="absolute top-3 left-3 lg:top-4 lg:left-4 z-[400] flex flex-col map-control-group">
         <button onClick={handleZoomIn} className="map-control-btn" title="放大" aria-label="放大">
           <Plus size={16} />
         </button>
@@ -369,7 +406,7 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
       </div>
 
       {/* Scale bar */}
-      <div className="absolute bottom-4 left-4 z-[400] flex items-end gap-0.5 text-xs text-earth/80 bg-white/75 backdrop-blur-[2px] px-2 py-1 rounded border border-gold/10 shadow-sm">
+      <div className="hidden sm:flex absolute bottom-4 left-4 z-[400] items-end gap-0.5 text-xs text-earth/80 bg-white/75 backdrop-blur-[2px] px-2 py-1 rounded border border-gold/10 shadow-sm">
         <span>0</span>
         <div className="flex items-center">
           <div className="w-12 h-0.5 bg-earth/60 mx-1" />
@@ -382,7 +419,7 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
       </div>
 
       {/* Mini map / overview inset with real Hunan outline */}
-      <div className="absolute bottom-4 right-5 z-[400] mini-map-panel">
+      <div className="hidden md:block absolute bottom-4 right-5 z-[400] mini-map-panel">
         <svg viewBox={`0 0 ${MINI_W} ${MINI_H}`} className="w-full h-full block">
           <defs>
             <linearGradient id="miniHunanFill" x1="0" y1="0" x2="1" y2="1">

@@ -44,7 +44,7 @@ function swapToFallbackImage(event: { currentTarget: HTMLImageElement }, fallbac
 export default function BottomModules({ onNavigate, onPointSelect }: BottomModulesProps) {
   return (
     <div
-      className="w-full flex-shrink-0 relative overflow-hidden"
+      className="hidden lg:block w-full flex-shrink-0 relative overflow-hidden"
       style={{ background: 'linear-gradient(180deg, #faf8f2 0%, #f2ead7 62%, #ede2c9 100%)' }}
     >
       <div className="gold-thread" />
