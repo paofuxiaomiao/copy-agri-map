@@ -18,6 +18,7 @@ const navItems = [
 
 export default function Header({ activeNav, onNavChange, onSearch }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [logoFailed, setLogoFailed] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,15 +33,16 @@ export default function Header({ activeNav, onNavChange, onSearch }: HeaderProps
           {/* Brand area - seal + literary title */}
           <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3.5">
             <div className="w-9 h-9 sm:w-11 sm:h-11 flex-shrink-0 relative logo-stamp-shell">
-              <span className="logo-stamp-fallback">农<br />耕</span>
-              <img
-                src={assetUrl('/manus-storage/logo-stamp.webp')}
-                alt="农耕文明"
-                className="w-full h-full object-contain drop-shadow-sm"
-                onError={(event) => {
-                  event.currentTarget.style.display = 'none';
-                }}
-              />
+              {logoFailed ? (
+                <span className="logo-stamp-fallback">农<br />耕</span>
+              ) : (
+                <img
+                  src={assetUrl('/manus-storage/logo-stamp.webp')}
+                  alt="农耕文明"
+                  className="w-full h-full object-contain drop-shadow-sm"
+                  onError={() => setLogoFailed(true)}
+                />
+              )}
             </div>
             <div className="min-w-0 border-l border-gold/20 pl-2.5 sm:pl-3.5">
               <h1 className="truncate whitespace-nowrap text-[14px] sm:text-[17px] font-bold font-serif tracking-[0.06em] sm:tracking-[0.15em] leading-tight" style={{ color: '#3d2e0a' }}>
