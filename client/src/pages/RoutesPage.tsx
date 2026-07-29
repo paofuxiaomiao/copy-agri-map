@@ -132,7 +132,17 @@ export default function RoutesPage({ onBack }: RoutesPageProps) {
     : routesData.filter(r => r.theme === activeTheme);
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #faf8f2 0%, #f3ede3 100%)' }}>
+    <div className="min-h-screen relative" style={{ background: 'linear-gradient(180deg, #faf8f2 0%, #f3ede3 100%)' }}>
+      {/* Ambient page decoration - fixed ink-wash backdrop */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{
+          backgroundImage: `url(${assetUrl('/manus-storage/routes-hero-bg.webp')})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center bottom',
+          opacity: 0.4,
+        }}
+      />
       {/* Header */}
       <div className="sticky top-0 z-50 backdrop-blur-xl border-b border-gold/15" style={{ background: 'rgba(250,248,242,0.92)' }}>
         <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-between">
@@ -148,11 +158,23 @@ export default function RoutesPage({ onBack }: RoutesPageProps) {
       </div>
 
       {/* Hero */}
-      <div className="py-10 px-6 text-center">
+      <div className="relative py-14 px-6 text-center overflow-hidden">
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `url(${assetUrl('/manus-storage/routes-hero-bg.webp')})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center 65%',
+            opacity: 0.85,
+            maskImage: 'linear-gradient(180deg, black 0%, black 70%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(180deg, black 0%, black 70%, transparent 100%)',
+          }}
+        />
         <motion.div
+          className="relative"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
         >
           <p className="text-xs tracking-[0.3em] text-gold-dark/70 uppercase mb-2">THEMED ROUTES</p>
           <h2 className="text-3xl font-bold font-serif mb-3" style={{ color: '#2a1f08' }}>农耕文化主题线路</h2>
@@ -163,13 +185,13 @@ export default function RoutesPage({ onBack }: RoutesPageProps) {
       </div>
 
       {/* Theme Filter */}
-      <div className="max-w-[1400px] mx-auto px-6 mb-6">
+      <div className="relative z-10 max-w-[1400px] mx-auto px-6 mb-6">
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2">
           {themes.map(t => (
             <button
               key={t.id}
               onClick={() => setActiveTheme(t.id)}
-              className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 ${
+              className={`silky-chip px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap ${
                 activeTheme === t.id
                   ? 'bg-gradient-to-r from-gold-dark to-gold text-white shadow-md'
                   : 'bg-white/60 text-earth/70 hover:bg-white hover:text-earth border border-gold/10'
@@ -182,7 +204,7 @@ export default function RoutesPage({ onBack }: RoutesPageProps) {
       </div>
 
       {/* Routes Grid - Equal-distance cards */}
-      <div className="max-w-[1400px] mx-auto px-6 pb-12">
+      <div className="relative z-10 max-w-[1400px] mx-auto px-6 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           <AnimatePresence mode="popLayout">
             {filteredRoutes.map((route, idx) => (
@@ -196,7 +218,7 @@ export default function RoutesPage({ onBack }: RoutesPageProps) {
                 className="group cursor-pointer"
                 onClick={() => setSelectedRoute(route)}
               >
-                <div className="relative bg-white rounded-xl overflow-hidden border border-gold/10 hover:border-gold/25 hover:shadow-xl transition-all duration-500">
+                <div className="silky-card relative bg-white rounded-xl overflow-hidden border border-gold/10 hover:border-gold/25">
                   {/* Cover image with Ken Burns */}
                   <div className="relative aspect-[16/9] overflow-hidden">
                     <img

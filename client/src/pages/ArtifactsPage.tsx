@@ -148,7 +148,17 @@ export default function ArtifactsPage({ onBack }: ArtifactsPageProps) {
   }, [filteredArtifacts]);
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #faf8f2 0%, #f3ede3 50%, #ebe5d8 100%)' }}>
+    <div className="min-h-screen relative" style={{ background: 'linear-gradient(180deg, #faf8f2 0%, #f3ede3 50%, #ebe5d8 100%)' }}>
+      {/* Ambient page decoration - fixed ink-wash museum backdrop */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{
+          backgroundImage: `url(${assetUrl('/manus-storage/artifacts-hero-bg.webp')})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center bottom',
+          opacity: 0.38,
+        }}
+      />
       {/* Header Bar */}
       <div className="sticky top-0 z-50 backdrop-blur-xl border-b border-gold/15" style={{ background: 'rgba(250,248,242,0.92)' }}>
         <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-between">
@@ -164,8 +174,18 @@ export default function ArtifactsPage({ onBack }: ArtifactsPageProps) {
       </div>
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden py-12 px-6">
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M30 5L35 15L45 15L37 22L40 32L30 26L20 32L23 22L15 15L25 15Z\' fill=\'%238B6914\' fill-opacity=\'0.3\'/%3E%3C/svg%3E")', backgroundSize: '60px 60px' }} />
+      <div className="relative overflow-hidden py-14 px-6">
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `url(${assetUrl('/manus-storage/artifacts-hero-bg.webp')})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center 60%',
+            opacity: 0.85,
+            maskImage: 'linear-gradient(180deg, black 0%, black 70%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(180deg, black 0%, black 70%, transparent 100%)',
+          }}
+        />
         <div className="max-w-[1400px] mx-auto text-center relative">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -190,7 +210,7 @@ export default function ArtifactsPage({ onBack }: ArtifactsPageProps) {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 ${
+                className={`silky-chip flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap ${
                   activeCategory === cat.id
                     ? 'bg-gradient-to-r from-gold-dark to-gold text-white shadow-md'
                     : 'bg-white/60 text-earth/70 hover:bg-white hover:text-earth border border-gold/10'
@@ -208,7 +228,7 @@ export default function ArtifactsPage({ onBack }: ArtifactsPageProps) {
       </div>
 
       {/* Artifacts Grid - Museum-style Evidence Display */}
-      <div ref={containerRef} className="max-w-[1400px] mx-auto px-6 py-8">
+      <div ref={containerRef} className="relative z-10 max-w-[1400px] mx-auto px-6 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AnimatePresence mode="popLayout">
             {filteredArtifacts.map((artifact, index) => (
@@ -222,7 +242,7 @@ export default function ArtifactsPage({ onBack }: ArtifactsPageProps) {
                 className="reveal-item group"
               >
                 <div
-                  className="relative bg-white rounded-xl overflow-hidden border border-gold/10 hover:border-gold/30 hover:shadow-xl transition-all duration-500 cursor-pointer"
+                  className="silky-card relative bg-white rounded-xl overflow-hidden border border-gold/10 hover:border-gold/30 cursor-pointer"
                   onClick={() => setSelectedArtifact(artifact)}
                 >
                   {/* Image with Ken Burns effect */}

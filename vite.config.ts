@@ -162,6 +162,39 @@ function vitePluginStorageProxy(): Plugin {
           return;
         }
 
+        // Serve from local public/manus-storage first (assets committed to the repo)
+        try {
+          const fs = await import("fs");
+          const path = await import("path");
+          const localPath = path.resolve(
+            import.meta.dirname,
+            "client",
+            "public",
+            "manus-storage",
+            decodeURIComponent(key.split("?")[0]),
+          );
+          const publicRoot = path.resolve(import.meta.dirname, "client", "public", "manus-storage");
+          if (localPath.startsWith(publicRoot) && fs.existsSync(localPath) && fs.statSync(localPath).isFile()) {
+            const ext = path.extname(localPath).toLowerCase();
+            const mimeMap: Record<string, string> = {
+              ".webp": "image/webp",
+              ".png": "image/png",
+              ".jpg": "image/jpeg",
+              ".jpeg": "image/jpeg",
+              ".svg": "image/svg+xml",
+              ".gif": "image/gif",
+            };
+            res.writeHead(200, {
+              "Content-Type": mimeMap[ext] || "application/octet-stream",
+              "Cache-Control": "public, max-age=3600",
+            });
+            res.end(fs.readFileSync(localPath));
+            return;
+          }
+        } catch {
+          // fall through to remote proxy
+        }
+
         const forgeBaseUrl = (process.env.BUILT_IN_FORGE_API_URL || "").replace(/\/+$/, "");
         const forgeKey = process.env.BUILT_IN_FORGE_API_KEY;
 

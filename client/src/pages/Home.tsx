@@ -144,10 +144,10 @@ export default function Home() {
         {activeNav === 'artifacts' && (
           <motion.div
             key="artifacts"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+            initial={{ opacity: 0, y: 14, scale: 0.995 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.995 }}
+            transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
             className="flex-1 overflow-y-auto"
           >
             <ArtifactsPage onBack={handleBackToMap} />
@@ -157,10 +157,10 @@ export default function Home() {
         {activeNav === 'timeline' && (
           <motion.div
             key="timeline"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+            initial={{ opacity: 0, y: 14, scale: 0.995 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.995 }}
+            transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
             className="flex-1 overflow-y-auto"
           >
             <TimelinePage onBack={handleBackToMap} />
@@ -170,10 +170,10 @@ export default function Home() {
         {activeNav === 'routes' && (
           <motion.div
             key="routes"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+            initial={{ opacity: 0, y: 14, scale: 0.995 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.995 }}
+            transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
             className="flex-1 overflow-y-auto"
           >
             <RoutesPage onBack={handleBackToMap} />
@@ -183,10 +183,10 @@ export default function Home() {
         {activeNav === 'solar' && (
           <motion.div
             key="solar"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+            initial={{ opacity: 0, y: 14, scale: 0.995 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.995 }}
+            transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
             className="flex-1 overflow-y-auto"
           >
             <SolarTermsPage onBack={handleBackToMap} />

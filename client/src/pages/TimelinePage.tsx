@@ -125,7 +125,17 @@ export default function TimelinePage({ onBack }: TimelinePageProps) {
   }, []);
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #faf8f2 0%, #f3ede3 100%)' }}>
+    <div className="min-h-screen relative" style={{ background: 'linear-gradient(180deg, #faf8f2 0%, #f3ede3 100%)' }}>
+      {/* Ambient page decoration - fixed ink-wash river-of-time backdrop */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{
+          backgroundImage: `url(${assetUrl('/manus-storage/timeline-hero-bg.webp')})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center bottom',
+          opacity: 0.42,
+        }}
+      />
       {/* Header */}
       <div className="sticky top-0 z-50 backdrop-blur-xl border-b border-gold/15" style={{ background: 'rgba(250,248,242,0.92)' }}>
         <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-between">
@@ -141,11 +151,23 @@ export default function TimelinePage({ onBack }: TimelinePageProps) {
       </div>
 
       {/* Hero */}
-      <div className="py-10 px-6 text-center">
+      <div className="relative py-14 px-6 text-center overflow-hidden">
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `url(${assetUrl('/manus-storage/timeline-hero-bg.webp')})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center 70%',
+            opacity: 0.8,
+            maskImage: 'linear-gradient(180deg, black 0%, black 70%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(180deg, black 0%, black 70%, transparent 100%)',
+          }}
+        />
         <motion.div
+          className="relative"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
         >
           <p className="text-xs tracking-[0.3em] text-gold-dark/70 uppercase mb-2">DEVELOPMENT TIMELINE</p>
           <h2 className="text-3xl font-bold font-serif mb-3" style={{ color: '#2a1f08' }}>湖湘农耕文化发展脉络</h2>
@@ -156,7 +178,7 @@ export default function TimelinePage({ onBack }: TimelinePageProps) {
       </div>
 
       {/* Timeline Navigation Dots */}
-      <div className="max-w-[1400px] mx-auto px-6 mb-4">
+      <div className="relative z-10 max-w-[1400px] mx-auto px-6 mb-4">
         <div className="relative flex items-center justify-between">
           {/* Progress line */}
           <div className="absolute top-1/2 left-0 right-0 h-px bg-gold/20 -translate-y-1/2" />
@@ -188,7 +210,7 @@ export default function TimelinePage({ onBack }: TimelinePageProps) {
       </div>
 
       {/* Horizontal Scroll Timeline Cards */}
-      <div className="relative">
+      <div className="relative z-10">
         {/* Scroll arrows */}
         <button
           onClick={() => scrollToIndex(Math.max(0, activeIndex - 1))}
@@ -216,7 +238,7 @@ export default function TimelinePage({ onBack }: TimelinePageProps) {
               transition={{ duration: 0.5, delay: idx * 0.1 }}
               className="timeline-card snap-center flex-shrink-0 w-[85vw] md:w-[600px] lg:w-[700px]"
             >
-              <div className={`relative bg-white rounded-2xl overflow-hidden border border-gold/10 shadow-lg hover:shadow-xl transition-shadow duration-500`}>
+              <div className={`relative bg-white rounded-2xl overflow-hidden border border-gold/10 shadow-lg hover:shadow-2xl transition-shadow duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]`}>
                 {/* Top color bar */}
                 <div className="h-1.5" style={{ background: `linear-gradient(90deg, ${item.color}, ${item.color}88)` }} />
 
@@ -278,7 +300,7 @@ export default function TimelinePage({ onBack }: TimelinePageProps) {
       </div>
 
       {/* Bottom Summary Stats */}
-      <div className="max-w-[1400px] mx-auto px-6 py-10">
+      <div className="relative z-10 max-w-[1400px] mx-auto px-6 py-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: '时间跨度', value: '14000年', sub: '从史前到现代' },

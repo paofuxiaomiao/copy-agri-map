@@ -369,7 +369,7 @@ export const artifacts: Artifact[] = [
   {
     id: 'a001',
     name: '玉蟾岩遗址出土陶器',
-    image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=300&fit=crop',
+    image: assetUrl('/manus-storage/grain-processing_c71ef1ab.jpg'),
     description: '出土陶器',
     period: '旧石器时代晚期',
     unearthedSite: '道县玉蟾岩遗址'
@@ -377,7 +377,7 @@ export const artifacts: Artifact[] = [
   {
     id: 'a002',
     name: '彭头山遗址出土石斧',
-    image: 'https://images.unsplash.com/photo-1590012314607-cda9d9b699ae?w=300&h=300&fit=crop',
+    image: assetUrl('/manus-storage/plow-marks_83f28f57.jpg'),
     description: '石斧',
     period: '新石器时代早期',
     unearthedSite: '澧县彭头山遗址'
@@ -385,7 +385,7 @@ export const artifacts: Artifact[] = [
   {
     id: 'a003',
     name: '龟市遗址出土稻谷',
-    image: 'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=300&h=300&fit=crop',
+    image: assetUrl('/manus-storage/crop-specimen-2_3ac3a75d.jpg'),
     description: '出土稻谷',
     period: '新石器时代',
     unearthedSite: '澧县龟市遗址'
@@ -393,7 +393,7 @@ export const artifacts: Artifact[] = [
   {
     id: 'a004',
     name: '里耶秦简记载农政',
-    image: 'https://images.unsplash.com/photo-1590012314607-cda9d9b699ae?w=300&h=300&fit=crop',
+    image: assetUrl('/manus-storage/granary-model_21525627.jpg'),
     description: '记载农政',
     period: '秦代',
     unearthedSite: '龙山县里耶古城'
@@ -401,7 +401,7 @@ export const artifacts: Artifact[] = [
   {
     id: 'a005',
     name: '城头山遗址稻田遗迹',
-    image: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=300&h=300&fit=crop',
+    image: assetUrl('/manus-storage/irrigation-ditch_4625d299.jpg'),
     description: '世界最早水稻田遗迹',
     period: '新石器时代',
     unearthedSite: '澧县城头山遗址'
@@ -409,7 +409,7 @@ export const artifacts: Artifact[] = [
   {
     id: 'a006',
     name: '高庙遗址白陶',
-    image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=300&fit=crop',
+    image: assetUrl('/manus-storage/crop-specimen-1_5f13c604.jpg'),
     description: '精美白陶祭器',
     period: '新石器时代',
     unearthedSite: '洪江高庙遗址'

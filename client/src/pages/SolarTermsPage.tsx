@@ -113,7 +113,7 @@ export default function SolarTermsPage({ onBack }: SolarTermsPageProps) {
             <button
               key={s.id}
               onClick={() => setActiveSeason(s.id)}
-              className={`rounded-full px-5 py-2 text-xs font-medium transition-all duration-200 ${
+              className={`silky-chip rounded-full px-5 py-2 text-xs font-medium ${
                 activeSeason === s.id
                   ? 'text-white shadow-md'
                   : 'bg-white/60 text-earth/70 hover:bg-white border border-gold/10'
@@ -144,7 +144,7 @@ export default function SolarTermsPage({ onBack }: SolarTermsPageProps) {
                 aria-label={`查看${term.name}节气详情`}
               >
                 <div
-                  className="relative h-full overflow-hidden rounded-[18px] border bg-white/70 shadow-[0_5px_18px_rgba(79,60,28,0.06)] transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_14px_34px_rgba(79,60,28,0.14)]"
+                  className="relative h-full overflow-hidden rounded-[18px] border bg-white/70 shadow-[0_5px_18px_rgba(79,60,28,0.06)] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:-translate-y-1.5 group-hover:shadow-[0_16px_38px_rgba(79,60,28,0.15)]"
                   style={{ borderColor: seasonMeta[term.season].line }}
                 >
                   <div className="relative h-44 overflow-hidden" style={{ background: `radial-gradient(circle at 50% 45%, #fff 0%, ${seasonMeta[term.season].wash} 78%)` }}>
