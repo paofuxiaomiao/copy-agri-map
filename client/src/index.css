@@ -189,76 +189,127 @@
 
 /* Custom marker styles - seal-stamp inspired */
 .custom-marker {
-  transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+  background: transparent !important;
+  border: 0 !important;
+  overflow: visible !important;
 }
 
 .custom-marker:hover {
-  transform: scale(1.4) !important;
   z-index: 1000 !important;
 }
 
-/* Map label tooltips - archival plate style */
-.marker-label {
-  background: rgba(139, 105, 20, 0.92);
+/*
+ * Leaflet positions .custom-marker with an inline transform. Never animate or
+ * override that outer transform: doing so makes markers jump during flyTo.
+ * All visual motion is isolated to these inner layers.
+ */
+.culture-marker {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.culture-marker__core,
+.culture-marker__halo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 999px;
+}
+
+.culture-marker__core {
+  width: 12px;
+  height: 12px;
+  background: radial-gradient(circle at 35% 30%, #fff9 0 11%, var(--marker-color) 13% 100%);
+  border: 2.5px solid #fff;
+  box-shadow: 0 2px 8px rgba(44, 36, 24, 0.28);
+  transform: translate(-50%, -50%);
+  transition:
+    width 180ms ease,
+    height 180ms ease,
+    border-radius 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.culture-marker__halo {
+  width: 34px;
+  height: 34px;
+  border: 1px solid color-mix(in srgb, var(--marker-color) 58%, white);
+  background: color-mix(in srgb, var(--marker-color) 14%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--marker-color) 8%, transparent);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.82);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.custom-marker:hover .culture-marker__core {
+  transform: translate(-50%, -50%) scale(1.18);
+}
+
+.custom-marker.is-selected .culture-marker__core {
+  width: 22px;
+  height: 22px;
+  border-width: 3px;
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--marker-color) 15%, transparent),
+    0 8px 18px rgba(44, 36, 24, 0.24);
+  transform: translate(-50%, -50%) rotate(-4deg);
+}
+
+.custom-marker.is-selected:hover .culture-marker__core {
+  transform: translate(-50%, -50%) rotate(-4deg) scale(1.04);
+}
+
+.custom-marker.is-selected .culture-marker__halo {
+  opacity: 0.42;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Stable in-marker labels: featured points stay visible, others appear on
+ * hover, and the selected point is always visible. */
+.culture-marker__label {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  min-height: 22px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 3px;
   color: #fffdf8;
-  padding: 3px 12px;
-  border-radius: 2px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   font-family: 'Noto Serif SC', serif;
+  letter-spacing: 0.4px;
+  line-height: 1.35;
   white-space: nowrap;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  border: none !important;
-  letter-spacing: 0.5px;
+  background: var(--marker-color);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--marker-color) 34%, transparent);
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 4px);
+  transition: opacity 140ms ease, transform 140ms ease, visibility 0s linear 140ms;
 }
 
-.leaflet-tooltip.marker-label::before,
-.leaflet-tooltip.marker-label-ancient::before,
-.leaflet-tooltip.marker-label-modern::before,
-.leaflet-tooltip.marker-label-red::before {
-  display: none !important;
+.culture-marker--featured .culture-marker__label,
+.custom-marker:hover .culture-marker__label,
+.custom-marker.is-selected .culture-marker__label {
+  opacity: 0.93;
+  visibility: visible;
+  transform: translate(-50%, 0);
+  transition-delay: 0s;
 }
 
-.marker-label-ancient {
-  background: rgba(139, 105, 20, 0.93) !important;
-  color: #fffdf8 !important;
-  padding: 3px 12px !important;
-  border-radius: 2px !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  font-family: 'Noto Serif SC', serif !important;
-  white-space: nowrap !important;
-  box-shadow: 0 2px 10px rgba(139, 105, 20, 0.35) !important;
-  border: none !important;
-  letter-spacing: 0.5px !important;
-}
-
-.marker-label-modern {
-  background: rgba(74, 124, 89, 0.93) !important;
-  color: #fffdf8 !important;
-  padding: 3px 12px !important;
-  border-radius: 2px !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  font-family: 'Noto Serif SC', serif !important;
-  white-space: nowrap !important;
-  box-shadow: 0 2px 10px rgba(74, 124, 89, 0.35) !important;
-  border: none !important;
-  letter-spacing: 0.5px !important;
-}
-
-.marker-label-red {
-  background: rgba(180, 30, 50, 0.93) !important;
-  color: #fffdf8 !important;
-  padding: 3px 12px !important;
-  border-radius: 2px !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  font-family: 'Noto Serif SC', serif !important;
-  white-space: nowrap !important;
-  box-shadow: 0 2px 10px rgba(196, 30, 58, 0.35) !important;
-  border: none !important;
-  letter-spacing: 0.5px !important;
+.custom-marker.is-selected .culture-marker__label {
+  padding: 4px 11px;
+  font-size: 12px;
+  opacity: 0.98;
 }
 
 /* Panel glass effect - rice paper material */
@@ -576,19 +627,4 @@
 
 .silky-chip:active {
   transform: scale(0.96);
-}
-
-@keyframes pulse-ring {
-  0% {
-    transform: scale(0.8);
-    opacity: 0.42;
-  }
-  70% {
-    transform: scale(1.55);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1.55);
-    opacity: 0;
-  }
 }

@@ -39,54 +39,38 @@ function clampToBounds(lat: number, lng: number): [number, number] {
   return [clampedLat, clampedLng];
 }
 
-function buildMarkerHtml(color: string, isSelected: boolean) {
-  const size = isSelected ? 22 : 12;
-  const borderWidth = isSelected ? 3 : 2.5;
-  const ringSize = isSelected ? 42 : size;
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  })[character] ?? character);
+}
+
+function buildMarkerHtml(point: CulturePoint) {
+  const color = categoryColors[point.category];
+  const featuredClass = point.heritageLevel ? ' culture-marker--featured' : '';
   return `
-    <div style="
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: ${ringSize}px;
-      height: ${ringSize}px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    ">
-      ${isSelected ? `<div style="
-        position: absolute;
-        inset: 4px;
-        border-radius: 999px;
-        background: ${color};
-        opacity: 0.28;
-        animation: pulse-ring 1.8s ease-out infinite;
-      "></div>` : ''}
-      <div style="
-        position: relative;
-        width: ${size}px;
-        height: ${size}px;
-        background: radial-gradient(circle at 35% 30%, #fff9 0 11%, ${color} 13% 100%);
-        border: ${borderWidth}px solid white;
-        border-radius: ${isSelected ? '8px' : '50%'};
-        box-shadow: 0 2px 8px rgba(44,36,24,0.28)${isSelected ? ', 0 0 0 5px ' + color + '26, 0 8px 18px rgba(44,36,24,0.24)' : ''};
-        cursor: pointer;
-        transition: transform 0.25s cubic-bezier(0.23,1,0.32,1);
-        transform: ${isSelected ? 'rotate(-4deg)' : 'none'};
-      "></div>
+    <div
+      class="culture-marker culture-marker--${point.category}${featuredClass}"
+      style="--marker-color: ${color};"
+    >
+      <div class="culture-marker__halo"></div>
+      <div class="culture-marker__core"></div>
+      <span class="culture-marker__label" aria-hidden="true">${escapeHtml(point.name)}</span>
     </div>
   `;
 }
 
-function buildIcon(color: string, isSelected: boolean) {
+function buildIcon(point: CulturePoint) {
   const hitSize = 22;
   return L.divIcon({
     className: 'custom-marker',
-    html: buildMarkerHtml(color, isSelected),
-    // Keep a stable click target. The selected pulse may be larger visually,
-    // but it must not cover nearby markers and steal their clicks.
+    html: buildMarkerHtml(point),
+    // Leaflet owns the outer element's transform. Selection and hover effects
+    // only touch the inner visual layers, so map movement stays stable.
     iconSize: [hitSize, hitSize],
     iconAnchor: [hitSize / 2, hitSize / 2],
   });
@@ -170,6 +154,8 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
       // Smoother wheel zoom
       wheelDebounceTime: 30,
       wheelPxPerZoomLevel: 90,
+      // Tile opacity transitions can flash while flyTo changes zoom levels.
+      fadeAnimation: false,
     });
 
     // Use Amap (高德地图) vector tiles for cleaner Chinese map
@@ -224,17 +210,10 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
       console.warn('Failed to add Hunan boundary:', e);
     }
 
-    // Keep the mini-map viewport rectangle in sync without forcing multiple
-    // React renders for every Leaflet animation frame.
-    let viewFrame: number | null = null;
-    const bumpView = () => {
-      if (viewFrame !== null) return;
-      viewFrame = requestAnimationFrame(() => {
-        viewFrame = null;
-        setViewVersion(v => v + 1);
-      });
-    };
-    map.on('move zoom', bumpView);
+    // The mini-map only needs the final viewport. Re-rendering React on every
+    // Leaflet animation frame made the overlay compete with flyTo.
+    const bumpView = () => setViewVersion(v => v + 1);
+    map.on('moveend zoomend', bumpView);
 
     // Ensure the container is measured before any fly/positioning happens.
     const readyFrame = requestAnimationFrame(() => {
@@ -244,12 +223,11 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
 
     return () => {
       cancelAnimationFrame(readyFrame);
-      if (viewFrame !== null) cancelAnimationFrame(viewFrame);
       if (focusFrameRef.current !== null) {
         cancelAnimationFrame(focusFrameRef.current);
         focusFrameRef.current = null;
       }
-      map.off('move zoom', bumpView);
+      map.off('moveend zoomend', bumpView);
       map.remove();
       mapRef.current = null;
       markerIndexRef.current.clear();
@@ -267,9 +245,8 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
     markerIndexRef.current.clear();
 
     points.forEach((point) => {
-      const color = categoryColors[point.category];
       const marker = L.marker([point.latitude, point.longitude], {
-        icon: buildIcon(color, false),
+        icon: buildIcon(point),
         title: point.name,
         alt: point.name,
         keyboard: true,
@@ -289,8 +266,8 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
     });
   }, [points, mapReady]);
 
-  // Derive every marker's visual and tooltip state from the single selected id.
-  // With only 15 points this is cheap, deterministic, and avoids stale labels.
+  // Derive selection from one id without replacing marker DOM or rebinding
+  // tooltips. Featured labels live inside the stable icon and remain visible.
   useEffect(() => {
     if (!mapReady) return;
     const index = markerIndexRef.current;
@@ -301,21 +278,12 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
       if (!marker) return;
 
       const isSelected = point.id === selectedId;
-      marker.closeTooltip();
-      marker.unbindTooltip();
-      marker.setIcon(buildIcon(categoryColors[point.category], isSelected));
       marker.setZIndexOffset(isSelected ? 1000 : 0);
-      marker.bindTooltip(point.name, {
-        permanent: isSelected,
-        direction: 'top',
-        offset: [0, isSelected ? -20 : -10],
-        className: `marker-label-${point.category}`,
-        opacity: isSelected ? 1 : 0.92,
-      });
-
       const element = marker.getElement();
-      if (element) element.dataset.pointId = point.id;
-      if (isSelected) marker.openTooltip();
+      if (!element) return;
+      element.dataset.pointId = point.id;
+      element.classList.toggle('is-selected', isSelected);
+      element.setAttribute('aria-current', isSelected ? 'location' : 'false');
     });
   }, [selectedPoint, points, mapReady]);
 
@@ -330,13 +298,11 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
     if (!point) return;
 
     map.stop();
-    map.invalidateSize();
     if (focusFrameRef.current !== null) {
       cancelAnimationFrame(focusFrameRef.current);
     }
 
-    // Wait one frame so invalidateSize is committed before projecting,
-    // otherwise the offset maths runs against a stale container size.
+    // Wait one frame so rapid clicks collapse to the latest focus request.
     focusFrameRef.current = requestAnimationFrame(() => {
       focusFrameRef.current = null;
       if (!mapRef.current || lastFocusNonceRef.current !== focusRequest.nonce) return;
