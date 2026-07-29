@@ -533,9 +533,7 @@
   }
 
   .map-control-divider {
-    width: 1px;
-    height: auto;
-    margin: 8px 0;
+    margin: 0 8px;
   }
 
   .map-parchment-overlay {
@@ -575,7 +573,7 @@
     top: 8px !important;
     right: auto !important;
     bottom: 8px !important;
-    left: 8px !important;
+    left: 72px !important;
     width: min(300px, 42vw) !important;
     max-height: none !important;
   }

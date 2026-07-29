@@ -21,7 +21,6 @@ export default function Home() {
     isCompactViewport() ? null : culturePoints[0]
   ));
   const [focusRequest, setFocusRequest] = useState<{ pointId: string; nonce: number } | null>(null);
-  const [isLayerPanelOpen, setIsLayerPanelOpen] = useState(false);
   const [visibleLayers, setVisibleLayers] = useState({
     ancient: true,
     modern: true,
@@ -42,7 +41,6 @@ export default function Home() {
   }, [selectedPoint, visibleLayers]);
 
   const focusPoint = useCallback((point: CulturePoint) => {
-    setIsLayerPanelOpen(false);
     setSelectedPoint(point);
     setFocusRequest(prev => ({ pointId: point.id, nonce: (prev?.nonce ?? 0) + 1 }));
   }, []);
@@ -52,23 +50,13 @@ export default function Home() {
     setFocusRequest(null);
   }, []);
 
-  const openLayerPanel = useCallback(() => {
-    clearSelection();
-    setIsLayerPanelOpen(true);
-  }, [clearSelection]);
-
-  const closeLayerPanel = useCallback(() => {
-    setIsLayerPanelOpen(false);
-  }, []);
-
   const previousCompactLayoutRef = useRef(isCompactLayout);
   useEffect(() => {
     if (isCompactLayout && !previousCompactLayoutRef.current) {
       clearSelection();
-      closeLayerPanel();
     }
     previousCompactLayoutRef.current = isCompactLayout;
-  }, [clearSelection, closeLayerPanel, isCompactLayout]);
+  }, [clearSelection, isCompactLayout]);
 
   const handlePointSelect = useCallback((point: CulturePoint) => {
     focusPoint(point);
@@ -108,9 +96,8 @@ export default function Home() {
   }, [selectedPoint, filteredPoints, focusPoint]);
 
   const handleNavChange = useCallback((nav: string) => {
-    closeLayerPanel();
     setActiveNav(nav);
-  }, [closeLayerPanel]);
+  }, []);
 
   const handleBackToMap = useCallback(() => {
     setActiveNav('map');
@@ -151,13 +138,9 @@ export default function Home() {
                 focusRequest={focusRequest}
                 onPointSelect={handlePointSelect}
                 visibleLayers={visibleLayers}
-                layerPanelOpen={isLayerPanelOpen}
-                onLayerPanelOpen={openLayerPanel}
               />
 
               <LayerPanel
-                open={isLayerPanelOpen}
-                onOpenChange={(open) => open ? openLayerPanel() : closeLayerPanel()}
                 visibleLayers={visibleLayers}
                 onLayerToggle={handleLayerToggle}
                 onSearch={handleSearch}
