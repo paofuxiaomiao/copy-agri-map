@@ -453,6 +453,74 @@
   background: rgba(139, 105, 20, 0.35);
 }
 
+/* ═══ Map controls: unified rounded panel group ═══ */
+.map-control-group {
+  background: rgba(255, 253, 248, 0.94);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(139, 105, 20, 0.18);
+  border-radius: 10px;
+  box-shadow:
+    0 4px 14px rgba(61, 46, 10, 0.12),
+    0 1px 3px rgba(61, 46, 10, 0.08);
+  overflow: hidden;
+}
+.map-control-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b5416;
+  background: transparent;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    transform 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.map-control-btn:hover {
+  background: rgba(139, 105, 20, 0.1);
+  color: #4a3a0e;
+}
+.map-control-btn:active {
+  transform: scale(0.9);
+}
+.map-control-divider {
+  height: 1px;
+  margin: 0 6px;
+  background: rgba(139, 105, 20, 0.14);
+}
+
+/* ═══ Mini map inset: real Hunan outline overview ═══ */
+.mini-map-panel {
+  width: 120px;
+  height: 110px;
+  background: rgba(255, 253, 248, 0.92);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(139, 105, 20, 0.18);
+  border-radius: 12px;
+  box-shadow:
+    0 4px 14px rgba(61, 46, 10, 0.12),
+    0 1px 3px rgba(61, 46, 10, 0.08);
+  overflow: hidden;
+  transition: box-shadow 0.35s ease, transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.mini-map-panel:hover {
+  box-shadow:
+    0 8px 22px rgba(61, 46, 10, 0.16),
+    0 2px 6px rgba(61, 46, 10, 0.1);
+  transform: translateY(-2px);
+}
+.mini-map-label {
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgba(107, 84, 22, 0.72);
+  font-family: 'Noto Serif SC', serif;
+  pointer-events: none;
+}
+
 /* Parchment texture overlay for map */
 .map-parchment-overlay {
   pointer-events: none;
