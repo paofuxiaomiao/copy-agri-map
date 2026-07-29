@@ -48,13 +48,13 @@ export default function PointDetail({ point, onClose, onPrev, onNext }: PointDet
               <h3 className="text-[13px] font-semibold text-foreground font-serif">点位详情</h3>
             </div>
             <div className="flex items-center gap-0.5">
-              <button onClick={onPrev} className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-gold/10 transition-colors active:scale-95">
+              <button aria-label="上一个点位" onClick={onPrev} className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-gold/10 transition-colors active:scale-95">
                 <ChevronLeft size={15} className="text-muted-foreground" />
               </button>
-              <button onClick={onNext} className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-gold/10 transition-colors active:scale-95">
+              <button aria-label="下一个点位" onClick={onNext} className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-gold/10 transition-colors active:scale-95">
                 <ChevronRight size={15} className="text-muted-foreground" />
               </button>
-              <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-red/10 transition-colors ml-1 active:scale-95">
+              <button aria-label="关闭点位详情" onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-red/10 transition-colors ml-1 active:scale-95">
                 <X size={15} className="text-muted-foreground" />
               </button>
             </div>

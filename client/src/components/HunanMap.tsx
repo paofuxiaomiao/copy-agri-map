@@ -44,7 +44,18 @@ function buildMarkerHtml(color: string, isSelected: boolean) {
   const borderWidth = isSelected ? 3 : 2.5;
   const ringSize = isSelected ? 42 : size;
   return `
-    <div style="position: relative; width: ${ringSize}px; height: ${ringSize}px; display: flex; align-items: center; justify-content: center;">
+    <div style="
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: ${ringSize}px;
+      height: ${ringSize}px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    ">
       ${isSelected ? `<div style="
         position: absolute;
         inset: 4px;
@@ -70,12 +81,14 @@ function buildMarkerHtml(color: string, isSelected: boolean) {
 }
 
 function buildIcon(color: string, isSelected: boolean) {
-  const ringSize = isSelected ? 42 : 12;
+  const hitSize = 22;
   return L.divIcon({
     className: 'custom-marker',
     html: buildMarkerHtml(color, isSelected),
-    iconSize: [ringSize, ringSize],
-    iconAnchor: [ringSize / 2, ringSize / 2],
+    // Keep a stable click target. The selected pulse may be larger visually,
+    // but it must not cover nearby markers and steal their clicks.
+    iconSize: [hitSize, hitSize],
+    iconAnchor: [hitSize / 2, hitSize / 2],
   });
 }
 
@@ -126,18 +139,14 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
   const markerIndexRef = useRef<Map<string, L.Marker>>(new Map());
-  const prevSelectedIdRef = useRef<string | null>(null);
   const lastFocusNonceRef = useRef<number>(0);
+  const focusFrameRef = useRef<number | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [viewVersion, setViewVersion] = useState(0);
 
-  // Stable refs
+  // Stable callback ref
   const onPointSelectRef = useRef(onPointSelect);
   onPointSelectRef.current = onPointSelect;
-  const pointsRef = useRef(points);
-  pointsRef.current = points;
-  const focusRequestRef = useRef(focusRequest);
-  focusRequestRef.current = focusRequest;
 
   const mini = useMiniMapGeometry();
 
@@ -215,36 +224,35 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
       console.warn('Failed to add Hunan boundary:', e);
     }
 
-    // Keep the mini-map viewport rectangle in sync
-    const bumpView = () => setViewVersion(v => v + 1);
-    map.on('move zoom moveend zoomend', bumpView);
+    // Keep the mini-map viewport rectangle in sync without forcing multiple
+    // React renders for every Leaflet animation frame.
+    let viewFrame: number | null = null;
+    const bumpView = () => {
+      if (viewFrame !== null) return;
+      viewFrame = requestAnimationFrame(() => {
+        viewFrame = null;
+        setViewVersion(v => v + 1);
+      });
+    };
+    map.on('move zoom', bumpView);
 
     // Ensure the container is measured before any fly/positioning happens.
-    // When this component remounts (e.g. returning from another tab) the
-    // container may still be 0-sized on first paint, which used to break
-    // the fly-to projection maths entirely.
-    requestAnimationFrame(() => {
+    const readyFrame = requestAnimationFrame(() => {
       map.invalidateSize();
       setMapReady(true);
-      // If a focus request arrived while unmounted, restore that view instantly.
-      const pending = focusRequestRef.current;
-      if (pending) {
-        const point = pointsRef.current.find(item => item.id === pending.pointId);
-        if (point) {
-          lastFocusNonceRef.current = pending.nonce;
-          const markerPoint = map.project(clampToBounds(point.latitude, point.longitude), FOCUS_ZOOM);
-          const visualCenter = map.unproject(markerPoint.add([72, 0]), FOCUS_ZOOM);
-          map.setView(visualCenter, FOCUS_ZOOM, { animate: false });
-        }
-      }
     });
 
     return () => {
-      map.off('move zoom moveend zoomend', bumpView);
+      cancelAnimationFrame(readyFrame);
+      if (viewFrame !== null) cancelAnimationFrame(viewFrame);
+      if (focusFrameRef.current !== null) {
+        cancelAnimationFrame(focusFrameRef.current);
+        focusFrameRef.current = null;
+      }
+      map.off('move zoom', bumpView);
       map.remove();
       mapRef.current = null;
       markerIndexRef.current.clear();
-      prevSelectedIdRef.current = null;
     };
   }, []);
 
@@ -262,92 +270,56 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
       const color = categoryColors[point.category];
       const marker = L.marker([point.latitude, point.longitude], {
         icon: buildIcon(color, false),
+        title: point.name,
+        alt: point.name,
+        keyboard: true,
+        riseOnHover: true,
+        riseOffset: 500,
       });
 
-      const tooltipClass = `marker-label-${point.category}`;
-      if (point.heritageLevel) {
-        marker.bindTooltip(point.name, {
-          permanent: true,
-          direction: 'top',
-          offset: [0, -12],
-          className: tooltipClass,
-        });
-      }
-
-      marker.on('click', () => {
+      marker.on('click', (event) => {
+        L.DomEvent.stopPropagation(event);
         onPointSelectRef.current(point);
       });
 
-      marker.on('mouseover', () => {
-        if (!point.heritageLevel && prevSelectedIdRef.current !== point.id) {
-          marker.bindTooltip(point.name, {
-            direction: 'top',
-            offset: [0, -10],
-            className: tooltipClass,
-          }).openTooltip();
-        }
-      });
-      marker.on('mouseout', () => {
-        if (!point.heritageLevel && prevSelectedIdRef.current !== point.id) {
-          marker.unbindTooltip();
-        }
-      });
-
       group.addLayer(marker);
+      const element = marker.getElement();
+      if (element) element.dataset.pointId = point.id;
       markerIndexRef.current.set(point.id, marker);
     });
-
-    // Re-apply current selection highlight after a rebuild
-    prevSelectedIdRef.current = null;
   }, [points, mapReady]);
 
-  // Update only the two affected markers when the selection changes.
+  // Derive every marker's visual and tooltip state from the single selected id.
+  // With only 15 points this is cheap, deterministic, and avoids stale labels.
   useEffect(() => {
     if (!mapReady) return;
     const index = markerIndexRef.current;
-    const prevId = prevSelectedIdRef.current;
-    const nextId = selectedPoint?.id ?? null;
-    if (prevId === nextId) return;
+    const selectedId = selectedPoint?.id ?? null;
 
-    if (prevId) {
-      const prevMarker = index.get(prevId);
-      const prevPoint = points.find(p => p.id === prevId);
-      if (prevMarker && prevPoint) {
-        prevMarker.setIcon(buildIcon(categoryColors[prevPoint.category], false));
-        prevMarker.setZIndexOffset(0);
-        if (prevPoint.heritageLevel) {
-          prevMarker.unbindTooltip();
-          prevMarker.bindTooltip(prevPoint.name, {
-            permanent: true,
-            direction: 'top',
-            offset: [0, -12],
-            className: `marker-label-${prevPoint.category}`,
-          });
-        } else {
-          prevMarker.unbindTooltip();
-        }
-      }
-    }
+    points.forEach((point) => {
+      const marker = index.get(point.id);
+      if (!marker) return;
 
-    if (nextId && selectedPoint) {
-      const nextMarker = index.get(nextId);
-      if (nextMarker) {
-        nextMarker.setIcon(buildIcon(categoryColors[selectedPoint.category], true));
-        nextMarker.setZIndexOffset(1000);
-        nextMarker.unbindTooltip();
-        nextMarker.bindTooltip(selectedPoint.name, {
-          permanent: true,
-          direction: 'top',
-          offset: [0, -20],
-          className: `marker-label-${selectedPoint.category}`,
-        });
-      }
-    }
+      const isSelected = point.id === selectedId;
+      marker.closeTooltip();
+      marker.unbindTooltip();
+      marker.setIcon(buildIcon(categoryColors[point.category], isSelected));
+      marker.setZIndexOffset(isSelected ? 1000 : 0);
+      marker.bindTooltip(point.name, {
+        permanent: isSelected,
+        direction: 'top',
+        offset: [0, isSelected ? -20 : -10],
+        className: `marker-label-${point.category}`,
+        opacity: isSelected ? 1 : 0.92,
+      });
 
-    prevSelectedIdRef.current = nextId;
+      const element = marker.getElement();
+      if (element) element.dataset.pointId = point.id;
+      if (isSelected) marker.openTooltip();
+    });
   }, [selectedPoint, points, mapReady]);
 
-  // Fly on every explicit focus request, including repeated clicks.
+  // Fly on every explicit focus request, including repeated and rapid clicks.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady || !focusRequest) return;
@@ -359,11 +331,15 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
 
     map.stop();
     map.invalidateSize();
+    if (focusFrameRef.current !== null) {
+      cancelAnimationFrame(focusFrameRef.current);
+    }
 
     // Wait one frame so invalidateSize is committed before projecting,
     // otherwise the offset maths runs against a stale container size.
-    requestAnimationFrame(() => {
-      if (!mapRef.current) return;
+    focusFrameRef.current = requestAnimationFrame(() => {
+      focusFrameRef.current = null;
+      if (!mapRef.current || lastFocusNonceRef.current !== focusRequest.nonce) return;
       // Shift the center slightly east so the marker stays clear of the detail card.
       const [lat, lng] = clampToBounds(point.latitude, point.longitude);
       const markerPoint = map.project([lat, lng], FOCUS_ZOOM);
@@ -371,6 +347,13 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
       const target = clampToBounds(rawCenter.lat, rawCenter.lng);
       map.flyTo(target, FOCUS_ZOOM, { duration: 0.9, easeLinearity: 0.2 });
     });
+
+    return () => {
+      if (focusFrameRef.current !== null) {
+        cancelAnimationFrame(focusFrameRef.current);
+        focusFrameRef.current = null;
+      }
+    };
   }, [focusRequest, mapReady, points]);
 
   const handleZoomIn = () => mapRef.current?.zoomIn();

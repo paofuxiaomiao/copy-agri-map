@@ -28,12 +28,22 @@ export default function Home() {
   }, [visibleLayers]);
 
   const handleLayerToggle = useCallback((layer: 'ancient' | 'modern' | 'red') => {
+    const willHideLayer = visibleLayers[layer];
     setVisibleLayers(prev => ({ ...prev, [layer]: !prev[layer] }));
-  }, []);
+    if (willHideLayer && selectedPoint?.category === layer) {
+      setSelectedPoint(null);
+      setFocusRequest(null);
+    }
+  }, [selectedPoint, visibleLayers]);
 
   const focusPoint = useCallback((point: CulturePoint) => {
     setSelectedPoint(point);
     setFocusRequest(prev => ({ pointId: point.id, nonce: (prev?.nonce ?? 0) + 1 }));
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedPoint(null);
+    setFocusRequest(null);
   }, []);
 
   const handlePointSelect = useCallback((point: CulturePoint) => {
@@ -56,20 +66,20 @@ export default function Home() {
 
   const handleClear = useCallback(() => {
     setVisibleLayers({ ancient: true, modern: true, red: true });
-    setSelectedPoint(null);
-  }, []);
+    clearSelection();
+  }, [clearSelection]);
 
   const handlePrevPoint = useCallback(() => {
-    if (!selectedPoint) return;
+    if (!selectedPoint || filteredPoints.length === 0) return;
     const currentIndex = filteredPoints.findIndex(p => p.id === selectedPoint.id);
-    const prevIndex = currentIndex > 0 ? currentIndex - 1 : filteredPoints.length - 1;
+    const prevIndex = currentIndex <= 0 ? filteredPoints.length - 1 : currentIndex - 1;
     focusPoint(filteredPoints[prevIndex]);
   }, [selectedPoint, filteredPoints, focusPoint]);
 
   const handleNextPoint = useCallback(() => {
-    if (!selectedPoint) return;
+    if (!selectedPoint || filteredPoints.length === 0) return;
     const currentIndex = filteredPoints.findIndex(p => p.id === selectedPoint.id);
-    const nextIndex = currentIndex < filteredPoints.length - 1 ? currentIndex + 1 : 0;
+    const nextIndex = currentIndex < 0 || currentIndex >= filteredPoints.length - 1 ? 0 : currentIndex + 1;
     focusPoint(filteredPoints[nextIndex]);
   }, [selectedPoint, filteredPoints, focusPoint]);
 
@@ -127,7 +137,7 @@ export default function Home() {
 
               <PointDetail
                 point={selectedPoint}
-                onClose={() => setSelectedPoint(null)}
+                onClose={clearSelection}
                 onPrev={handlePrevPoint}
                 onNext={handleNextPoint}
               />
