@@ -30,7 +30,7 @@ export default function LayerPanel({ visibleLayers, onLayerToggle, onSearch, onC
         onClick={() => setCollapsed(false)}
         aria-label="打开图层筛选"
         title="图层筛选"
-        className="absolute top-3 left-16 z-[1001] w-11 h-11 lg:top-4 lg:left-14 lg:w-9 lg:h-9 flex items-center justify-center glass-panel rounded-full lg:rounded hover:bg-gold/10 transition-colors active:scale-95"
+        className="absolute top-3 left-[72px] z-[1001] w-11 h-11 lg:top-4 lg:left-[68px] lg:w-9 lg:h-9 flex items-center justify-center glass-panel rounded-full lg:rounded hover:bg-gold/10 transition-colors active:scale-95"
       >
         <SlidersHorizontal size={17} className="text-gold-dark" />
       </button>
@@ -38,7 +38,7 @@ export default function LayerPanel({ visibleLayers, onLayerToggle, onSearch, onC
   }
 
   return (
-    <div className="map-layer-panel absolute inset-x-3 bottom-3 z-[1001] max-h-[62%] w-auto glass-panel rounded-xl overflow-x-hidden overflow-y-auto animate-in slide-in-from-bottom-4 duration-300 lg:inset-x-auto lg:bottom-auto lg:top-4 lg:left-14 lg:max-h-[calc(100%-2rem)] lg:w-[258px] lg:rounded-lg lg:slide-in-from-left-4">
+    <div className="map-layer-panel absolute inset-x-3 bottom-3 z-[1001] max-h-[62%] w-auto glass-panel rounded-xl overflow-x-hidden overflow-y-auto animate-in slide-in-from-bottom-4 duration-300 lg:inset-x-auto lg:bottom-auto lg:top-4 lg:left-[68px] lg:max-h-[calc(100%-2rem)] lg:w-[258px] lg:rounded-lg lg:slide-in-from-left-4">
       {/* Panel header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-gold/10">
         <div className="flex items-center gap-2">
