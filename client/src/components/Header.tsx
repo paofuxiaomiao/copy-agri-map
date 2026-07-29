@@ -28,10 +28,10 @@ export default function Header({ activeNav, onNavChange, onSearch }: HeaderProps
     <header className="sticky top-0 z-50 w-full">
       {/* Top navigation - museum atlas header */}
       <div className="border-b border-gold/15" style={{ background: 'linear-gradient(180deg, #faf6ee 0%, #f6f1e8 100%)' }}>
-        <div className="flex items-center justify-between px-5 h-[56px]">
+        <div className="flex min-w-0 items-center justify-between gap-2 px-3 sm:px-5 h-[56px]">
           {/* Brand area - seal + literary title */}
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 flex-shrink-0 relative logo-stamp-shell">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3.5">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 flex-shrink-0 relative logo-stamp-shell">
               <span className="logo-stamp-fallback">农<br />耕</span>
               <img
                 src={assetUrl('/manus-storage/logo-stamp.webp')}
@@ -42,11 +42,11 @@ export default function Header({ activeNav, onNavChange, onSearch }: HeaderProps
                 }}
               />
             </div>
-            <div className="border-l border-gold/20 pl-3.5">
-              <h1 className="text-[17px] font-bold font-serif tracking-[0.15em] leading-tight" style={{ color: '#3d2e0a' }}>
+            <div className="min-w-0 border-l border-gold/20 pl-2.5 sm:pl-3.5">
+              <h1 className="truncate whitespace-nowrap text-[13px] sm:text-[17px] font-bold font-serif tracking-[0.08em] sm:tracking-[0.15em] leading-tight" style={{ color: '#3d2e0a' }}>
                 湖南省农耕文化地图
               </h1>
-              <p className="text-[11px] tracking-[0.08em] mt-0.5" style={{ color: '#8a7a5a' }}>
+              <p className="hidden sm:block truncate whitespace-nowrap text-[11px] tracking-[0.08em] mt-0.5" style={{ color: '#8a7a5a' }}>
                 小小一幅地图，展开湖湘万年农耕文明
               </p>
             </div>
@@ -73,7 +73,7 @@ export default function Header({ activeNav, onNavChange, onSearch }: HeaderProps
           </nav>
 
           {/* Search and share - archival controls */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-shrink-0 items-center gap-2.5">
             <form onSubmit={handleSearch} className="hidden md:flex items-center">
               <div className="relative">
                 <input
@@ -89,9 +89,13 @@ export default function Header({ activeNav, onNavChange, onSearch }: HeaderProps
                 </button>
               </div>
             </form>
-            <button className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium font-serif border rounded hover:shadow-sm transition-all duration-200 active:scale-97" style={{ color: '#5c4a1e', borderColor: 'rgba(139,105,20,0.25)', borderRadius: '3px' }}>
+            <button
+              aria-label="分享"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs font-medium font-serif border rounded hover:shadow-sm transition-all duration-200 active:scale-97"
+              style={{ color: '#5c4a1e', borderColor: 'rgba(139,105,20,0.25)', borderRadius: '3px' }}
+            >
               <Share2 size={13} />
-              <span>分享</span>
+              <span className="hidden sm:inline">分享</span>
             </button>
           </div>
         </div>
@@ -99,7 +103,7 @@ export default function Header({ activeNav, onNavChange, onSearch }: HeaderProps
 
       {/* Stats bar - catalogue index feel */}
       <div className="border-b border-gold/10" style={{ background: 'rgba(255,253,248,0.88)', backdropFilter: 'blur(10px)' }}>
-        <div className="flex items-center justify-center gap-10 px-6 h-[34px]">
+        <div className="flex items-center justify-between sm:justify-center gap-1 sm:gap-6 lg:gap-10 px-3 sm:px-6 h-[34px]">
           <StatItem icon={<PinIcon />} label="文化点位" value={128} unit="处" />
           <StatItem icon={<RouteIcon />} label="主题线路" value={3} unit="条" />
           <StatItem icon={<ArtifactIcon />} label="重要文物" value={24} unit="件" />
@@ -112,11 +116,11 @@ export default function Header({ activeNav, onNavChange, onSearch }: HeaderProps
 
 function StatItem({ icon, label, value, unit }: { icon: React.ReactNode; label: string; value: number; unit: string }) {
   return (
-    <div className="flex items-center gap-1.5 text-xs">
+    <div className="flex min-w-0 items-center gap-1 sm:gap-1.5 text-xs" aria-label={`${label} ${value}${unit}`}>
       <span className="opacity-80">{icon}</span>
-      <span className="text-[#8a7a5a] font-serif">{label}</span>
+      <span className="hidden sm:inline text-[#8a7a5a] font-serif">{label}</span>
       <span className="font-bold tabular-nums text-[13px]" style={{ color: '#5c4a1e' }}>{value}</span>
-      <span className="text-[#8a7a5a]">{unit}</span>
+      <span className="hidden sm:inline text-[#8a7a5a]">{unit}</span>
     </div>
   );
 }
