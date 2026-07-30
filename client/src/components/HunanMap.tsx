@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo, type CSSProperties } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { CulturePoint } from '@/data/points';
+import { CulturePoint, type ThemeRoute } from '@/data/points';
 import { hunanBoundary } from '@/data/hunan-boundary';
-import { Plus, Minus, Locate } from 'lucide-react';
+import { Plus, Minus, Locate, Route as RouteIcon, X } from 'lucide-react';
 
 interface HunanMapProps {
   points: CulturePoint[];
@@ -11,6 +11,11 @@ interface HunanMapProps {
   focusRequest: { pointId: string; nonce: number } | null;
   onPointSelect: (point: CulturePoint) => void;
   visibleLayers: { ancient: boolean; modern: boolean; red: boolean };
+  activeRoute: ThemeRoute | null;
+  routePoints: CulturePoint[];
+  activeRouteStopId: string | null;
+  onRouteStopSelect: (pointId: string) => void;
+  onRouteExit: () => void;
 }
 
 // Tuned so the whole province sits visually centred in the map viewport
@@ -90,6 +95,20 @@ function buildIcon(point: CulturePoint) {
   });
 }
 
+function buildRouteStopIcon(point: CulturePoint, index: number, color: string) {
+  return L.divIcon({
+    className: 'route-stop-marker',
+    html: `
+      <div class="route-stop-marker__body" style="--route-color:${color}">
+        <span>${index + 1}</span>
+      </div>
+      <span class="route-stop-marker__label">${escapeHtml(point.name)}</span>
+    `,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+  });
+}
+
 /** Mini-map: project the real Hunan boundary GeoJSON into an SVG path. */
 const MINI_W = 120;
 const MINI_H = 110;
@@ -132,11 +151,24 @@ function useMiniMapGeometry() {
   }, []);
 }
 
-export default function HunanMap({ points, selectedPoint, focusRequest, onPointSelect, visibleLayers }: HunanMapProps) {
+export default function HunanMap({
+  points,
+  selectedPoint,
+  focusRequest,
+  onPointSelect,
+  visibleLayers,
+  activeRoute,
+  routePoints,
+  activeRouteStopId,
+  onRouteStopSelect,
+  onRouteExit,
+}: HunanMapProps) {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
+  const routeLayerRef = useRef<L.LayerGroup | null>(null);
   const markerIndexRef = useRef<Map<string, L.Marker>>(new Map());
+  const routeStopMarkerIndexRef = useRef<Map<string, L.Marker>>(new Map());
   const lastFocusNonceRef = useRef<number>(0);
   const focusFrameRef = useRef<number | null>(null);
   const [mapReady, setMapReady] = useState(false);
@@ -145,6 +177,8 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
   // Stable callback ref
   const onPointSelectRef = useRef(onPointSelect);
   onPointSelectRef.current = onPointSelect;
+  const onRouteStopSelectRef = useRef(onRouteStopSelect);
+  onRouteStopSelectRef.current = onRouteStopSelect;
   const selectedPointRef = useRef(selectedPoint);
   selectedPointRef.current = selectedPoint;
 
@@ -159,7 +193,7 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
       zoom: HUNAN_ZOOM,
       zoomControl: false,
       attributionControl: false,
-      minZoom: 7,
+      minZoom: 6.5,
       maxZoom: 14,
       // Fractional zoom keeps flyTo targets exact instead of snapping to integers,
       // which previously made the fly-to animation land on the wrong offset.
@@ -187,6 +221,7 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
     }
 
     markersRef.current = L.layerGroup().addTo(map);
+    routeLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
 
     // Add Hunan province boundary with outside mask
@@ -270,6 +305,8 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
       map.remove();
       mapRef.current = null;
       markerIndexRef.current.clear();
+      routeStopMarkerIndexRef.current.clear();
+      routeLayerRef.current = null;
     };
   }, []);
 
@@ -305,6 +342,95 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
     });
   }, [points, mapReady]);
 
+  // Build a stable route overlay from the same point IDs used by the route page.
+  useEffect(() => {
+    const map = mapRef.current;
+    const group = routeLayerRef.current;
+    if (!map || !group || !mapReady) return;
+
+    group.clearLayers();
+    routeStopMarkerIndexRef.current.clear();
+    if (!activeRoute || routePoints.length < 2) return;
+
+    const latLngs = routePoints.map(point => L.latLng(point.latitude, point.longitude));
+
+    L.polyline(latLngs, {
+      color: '#fffaf0',
+      weight: 9,
+      opacity: 0.9,
+      lineCap: 'round',
+      lineJoin: 'round',
+      interactive: false,
+    }).addTo(group);
+
+    L.polyline(latLngs, {
+      color: activeRoute.color,
+      weight: 4,
+      opacity: 0.94,
+      lineCap: 'round',
+      lineJoin: 'round',
+      dashArray: '1, 10',
+      interactive: false,
+    }).addTo(group);
+
+    routePoints.forEach((point, index) => {
+      const marker = L.marker([point.latitude, point.longitude], {
+        icon: buildRouteStopIcon(point, index, activeRoute.color),
+        title: `第${index + 1}站：${point.name}`,
+        alt: `第${index + 1}站：${point.name}`,
+        keyboard: true,
+        riseOnHover: true,
+        riseOffset: 1200,
+        zIndexOffset: 1100,
+      });
+
+      marker.on('click', event => {
+        L.DomEvent.stopPropagation(event);
+        onRouteStopSelectRef.current(point.id);
+      });
+
+      group.addLayer(marker);
+      const element = marker.getElement();
+      if (element) element.dataset.routePointId = point.id;
+      routeStopMarkerIndexRef.current.set(point.id, marker);
+    });
+
+    const size = map.getSize();
+    const compact = size.x < 1024;
+    const compactLandscape = compact && size.x > size.y * 1.35;
+    const paddingTopLeft = compact
+      ? L.point(64, 62)
+      : L.point(320, 58);
+    const paddingBottomRight = compact
+      ? compactLandscape
+        ? L.point(260, 30)
+        : L.point(64, 120)
+      : L.point(280, 58);
+
+    const fitFrame = requestAnimationFrame(() => {
+      if (!mapRef.current) return;
+      map.stop();
+      map.fitBounds(L.latLngBounds(latLngs), {
+        paddingTopLeft,
+        paddingBottomRight,
+        maxZoom: 9.5,
+        animate: true,
+        duration: 0.8,
+      });
+    });
+
+    return () => cancelAnimationFrame(fitFrame);
+  }, [activeRoute, mapReady, routePoints]);
+
+  useEffect(() => {
+    routeStopMarkerIndexRef.current.forEach((marker, pointId) => {
+      const element = marker.getElement();
+      if (!element) return;
+      element.classList.toggle('is-active', pointId === activeRouteStopId);
+      element.setAttribute('aria-current', pointId === activeRouteStopId ? 'step' : 'false');
+    });
+  }, [activeRouteStopId, activeRoute, mapReady]);
+
   // Derive selection from one id without replacing marker DOM or rebinding
   // tooltips. Featured labels live inside the stable icon and remain visible.
   useEffect(() => {
@@ -322,9 +448,11 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
       if (!element) return;
       element.dataset.pointId = point.id;
       element.classList.toggle('is-selected', isSelected);
+      element.classList.toggle('is-route-stop', Boolean(activeRoute?.points.includes(point.id)));
+      element.classList.toggle('is-route-muted', Boolean(activeRoute && !activeRoute.points.includes(point.id)));
       element.setAttribute('aria-current', isSelected ? 'location' : 'false');
     });
-  }, [selectedPoint, points, mapReady]);
+  }, [selectedPoint, points, mapReady, activeRoute]);
 
   // Fly on every explicit focus request, including repeated and rapid clicks.
   useEffect(() => {
@@ -364,6 +492,10 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
   const handleReset = () => {
     mapRef.current?.flyTo(HUNAN_CENTER, HUNAN_ZOOM, { duration: 0.6 });
   };
+  const handleRouteExit = () => {
+    onRouteExit();
+    mapRef.current?.flyTo(HUNAN_CENTER, HUNAN_ZOOM, { duration: 0.6 });
+  };
 
   // Mini-map derived geometry: viewport rectangle + selected point dot
   const miniViewport = (() => {
@@ -380,8 +512,13 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
     }
   })();
 
-  const miniSelected = selectedPoint
-    ? mini.toXY(selectedPoint.longitude, selectedPoint.latitude)
+  const activeRouteStop = routePoints.find(point => point.id === activeRouteStopId) ?? null;
+  const activeRouteStopIndex = activeRouteStop
+    ? routePoints.findIndex(point => point.id === activeRouteStop.id)
+    : -1;
+  const miniFocusPoint = selectedPoint ?? activeRouteStop;
+  const miniSelected = miniFocusPoint
+    ? mini.toXY(miniFocusPoint.longitude, miniFocusPoint.latitude)
     : null;
 
   return (
@@ -389,6 +526,46 @@ export default function HunanMap({ points, selectedPoint, focusRequest, onPointS
       <div ref={mapContainerRef} className="absolute inset-0" />
       {/* Parchment vignette overlay */}
       <div className="map-parchment-overlay" />
+
+      {activeRoute && (
+        <section
+          className="route-map-card absolute top-16 right-3 lg:top-4 lg:right-4 z-[1002] w-[min(270px,calc(100%-76px))] rounded-xl border border-white/70 px-3.5 py-3"
+          style={{ '--route-color': activeRoute.color } as CSSProperties}
+          aria-label={`当前主题路线：${activeRoute.name}`}
+        >
+          <div className="flex items-start gap-2.5">
+            <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-white shadow-sm" style={{ background: activeRoute.color }}>
+              <RouteIcon size={16} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold tracking-[0.18em] text-[#8a7a5a]">主题路线</p>
+              <h3 className="truncate font-serif text-sm font-bold text-[#3d2e0a]">{activeRoute.name}</h3>
+              <p className="mt-0.5 truncate text-[11px] text-[#75684e]">
+                {activeRouteStop
+                  ? `第${activeRouteStopIndex + 1}站 · ${activeRouteStop.name}`
+                  : `${routePoints.length}个站点 · ${activeRoute.duration}`}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleRouteExit}
+              aria-label="退出路线模式"
+              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[#75684e] transition-colors hover:bg-black/5 hover:text-[#3d2e0a]"
+            >
+              <X size={15} />
+            </button>
+          </div>
+          <div className="route-map-card__progress mt-2.5 flex items-center gap-1" aria-hidden="true">
+            {routePoints.map((point, index) => (
+              <span
+                key={point.id}
+                className={`h-1.5 flex-1 rounded-full ${point.id === activeRouteStopId ? 'route-map-card__step--active' : ''}`}
+                style={{ background: point.id === activeRouteStopId ? activeRoute.color : `${activeRoute.color}33` }}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Custom map controls */}
       <div className="absolute top-3 left-3 lg:top-4 lg:left-4 z-[400] flex flex-col map-control-group">

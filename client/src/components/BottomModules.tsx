@@ -4,6 +4,7 @@ import { assetUrl, hideBrokenImage } from '@/lib/assets';
 
 interface BottomModulesProps {
   onPointSelect?: (pointId: string) => void;
+  onRouteSelect?: (routeId: string) => void;
   onNavigate?: (nav: string) => void;
 }
 
@@ -41,7 +42,7 @@ function swapToFallbackImage(event: { currentTarget: HTMLImageElement }, fallbac
   event.currentTarget.src = fallback;
 }
 
-export default function BottomModules({ onNavigate, onPointSelect }: BottomModulesProps) {
+export default function BottomModules({ onNavigate, onPointSelect, onRouteSelect }: BottomModulesProps) {
   return (
     <div
       className="hidden lg:block w-full flex-shrink-0 relative overflow-hidden"
@@ -79,7 +80,7 @@ export default function BottomModules({ onNavigate, onPointSelect }: BottomModul
           </div>
           <div className="flex gap-2.5">
             {themeRoutes.slice(0, 3).map((route) => (
-              <button key={route.id} type="button" className="flex-1 bottom-module-card group text-left active:scale-[0.97]" onClick={() => onPointSelect?.(route.points[0])}>
+              <button key={route.id} type="button" className="flex-1 bottom-module-card group text-left active:scale-[0.97]" onClick={() => onRouteSelect?.(route.id)}>
                 <div className="bottom-module-thumb aspect-[16/10] rounded-md overflow-hidden bg-muted mb-1.5 shadow-sm border border-gold/10 group-hover:shadow-lg group-hover:border-gold/30 transition-all duration-300 relative">
                   <img
                     src={route.coverImage}

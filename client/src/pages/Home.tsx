@@ -5,7 +5,7 @@ import LayerPanel from '@/components/LayerPanel';
 import PointDetail from '@/components/PointDetail';
 import BottomModules from '@/components/BottomModules';
 import Footer from '@/components/Footer';
-import { culturePoints, CulturePoint } from '@/data/points';
+import { culturePoints, themeRoutes, CulturePoint, type ThemeRoute } from '@/data/points';
 import { toast } from 'sonner';
 import ArtifactsPage from './ArtifactsPage';
 import TimelinePage from './TimelinePage';
@@ -21,11 +21,28 @@ export default function Home() {
     isCompactViewport() ? null : culturePoints[0]
   ));
   const [focusRequest, setFocusRequest] = useState<{ pointId: string; nonce: number } | null>(null);
+  const [activeRouteId, setActiveRouteId] = useState<ThemeRoute['id'] | null>(null);
+  const [activeRouteStopId, setActiveRouteStopId] = useState<string | null>(null);
   const [visibleLayers, setVisibleLayers] = useState({
     ancient: true,
     modern: true,
     red: true,
   });
+
+  const activeRoute = useMemo(
+    () => themeRoutes.find(route => route.id === activeRouteId) ?? null,
+    [activeRouteId],
+  );
+
+  const activeRoutePoints = useMemo(
+    () => activeRoute
+      ? activeRoute.points.flatMap(pointId => {
+          const point = culturePoints.find(item => item.id === pointId);
+          return point ? [point] : [];
+        })
+      : [],
+    [activeRoute],
+  );
 
   const filteredPoints = useMemo(() => {
     return culturePoints.filter(p => visibleLayers[p.category]);
@@ -41,8 +58,15 @@ export default function Home() {
   }, [selectedPoint, visibleLayers]);
 
   const focusPoint = useCallback((point: CulturePoint) => {
+    setActiveRouteId(null);
+    setActiveRouteStopId(null);
     setSelectedPoint(point);
     setFocusRequest(prev => ({ pointId: point.id, nonce: (prev?.nonce ?? 0) + 1 }));
+  }, []);
+
+  const clearActiveRoute = useCallback(() => {
+    setActiveRouteId(null);
+    setActiveRouteStopId(null);
   }, []);
 
   const clearSelection = useCallback(() => {
@@ -78,8 +102,9 @@ export default function Home() {
 
   const handleClear = useCallback(() => {
     setVisibleLayers({ ancient: true, modern: true, red: true });
+    clearActiveRoute();
     clearSelection();
-  }, [clearSelection]);
+  }, [clearActiveRoute, clearSelection]);
 
   const handlePrevPoint = useCallback(() => {
     if (!selectedPoint || filteredPoints.length === 0) return;
@@ -112,6 +137,31 @@ export default function Home() {
     }
   }, [focusPoint]);
 
+  const handleRouteSelect = useCallback((routeId: ThemeRoute['id'], pointId?: string) => {
+    const route = themeRoutes.find(item => item.id === routeId);
+    if (!route) return;
+    const routePoints = route.points.flatMap(id => {
+      const point = culturePoints.find(item => item.id === id);
+      return point ? [point] : [];
+    });
+    setVisibleLayers(prev => ({
+      ancient: prev.ancient || routePoints.some(point => point.category === 'ancient'),
+      modern: prev.modern || routePoints.some(point => point.category === 'modern'),
+      red: prev.red || routePoints.some(point => point.category === 'red'),
+    }));
+    setSelectedPoint(null);
+    setFocusRequest(null);
+    setActiveRouteId(route.id);
+    setActiveRouteStopId(pointId ?? null);
+    setActiveNav('map');
+  }, []);
+
+  const handleRouteStopSelect = useCallback((pointId: string) => {
+    setSelectedPoint(null);
+    setFocusRequest(null);
+    setActiveRouteStopId(pointId);
+  }, []);
+
   return (
     <div className="h-[100dvh] min-h-[100svh] flex flex-col bg-background overflow-hidden">
       <Header
@@ -138,6 +188,11 @@ export default function Home() {
                 focusRequest={focusRequest}
                 onPointSelect={handlePointSelect}
                 visibleLayers={visibleLayers}
+                activeRoute={activeRoute}
+                routePoints={activeRoutePoints}
+                activeRouteStopId={activeRouteStopId}
+                onRouteStopSelect={handleRouteStopSelect}
+                onRouteExit={clearActiveRoute}
               />
 
               <LayerPanel
@@ -156,7 +211,11 @@ export default function Home() {
             </main>
 
             {/* Bottom content modules */}
-            <BottomModules onNavigate={handleNavChange} onPointSelect={handleBottomPointSelect} />
+            <BottomModules
+              onNavigate={handleNavChange}
+              onPointSelect={handleBottomPointSelect}
+              onRouteSelect={handleRouteSelect}
+            />
 
             {/* Footer */}
             <Footer />
@@ -198,7 +257,7 @@ export default function Home() {
             transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
             className="flex-1 overflow-y-auto"
           >
-            <RoutesPage onBack={handleBackToMap} />
+            <RoutesPage onBack={handleBackToMap} onRouteSelect={handleRouteSelect} />
           </motion.div>
         )}
 

@@ -23,6 +23,9 @@ export interface ThemeRoute {
   theme: string;
   points: string[];
   duration: string;
+  difficulty: '轻松' | '适中';
+  color: string;
+  description: string;
 }
 
 export interface Artifact {
@@ -267,8 +270,11 @@ export const themeRoutes: ThemeRoute[] = [
     coverImage: assetUrl('/manus-storage/hero-route-1.webp'),
     summary: '探访稻作起源，追溯湖湘农耕文明的千年脉络',
     theme: '历史探源',
-    points: ['p002', 'p006', 'p001', 'p003'],
-    duration: '3-5天'
+    points: ['p002', 'p001', 'p006', 'p007'],
+    duration: '3天2晚',
+    difficulty: '轻松',
+    color: '#8B6914',
+    description: '从玉蟾岩、城头山到彭头山和高庙，沿着新石器时代遗址追溯湖湘稻作文明的早期脉络。'
   },
   {
     id: 'r002',
@@ -276,8 +282,11 @@ export const themeRoutes: ThemeRoute[] = [
     coverImage: assetUrl('/manus-storage/hero-route-2.webp'),
     summary: '科技赋能乡村，体验现代农业与乡村振兴成果',
     theme: '科技农旅',
-    points: ['p004', 'p009', 'p014', 'p012'],
-    duration: '2-3天'
+    points: ['p009', 'p003', 'p014', 'p004'],
+    duration: '2天1晚',
+    difficulty: '轻松',
+    color: '#4A7C59',
+    description: '串联水稻博物馆、千年梯田、农业科技示范园和杂交水稻基地，感受传统农耕与数字农业的连接。'
   },
   {
     id: 'r003',
@@ -286,7 +295,10 @@ export const themeRoutes: ThemeRoute[] = [
     summary: '走进红色旧址，传承农耕精神与革命记忆',
     theme: '红色教育',
     points: ['p010', 'p011', 'p005'],
-    duration: '2-3天'
+    duration: '2天1晚',
+    difficulty: '适中',
+    color: '#C41E3A',
+    description: '从韶山、浏阳到十八洞村，在革命记忆、农事教育与乡村振兴之间建立一条可感知的红色农耕路线。'
   }
 ];
 

@@ -204,6 +204,85 @@
   z-index: 1000 !important;
 }
 
+.custom-marker.is-route-muted {
+  opacity: 0.18 !important;
+  filter: grayscale(0.85);
+}
+
+.custom-marker.is-route-stop {
+  opacity: 0.45;
+}
+
+.custom-marker.is-route-stop .culture-marker__label {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.route-stop-marker {
+  overflow: visible !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.route-stop-marker__body {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 3px solid rgba(255, 253, 248, 0.98);
+  border-radius: 999px;
+  background: var(--route-color);
+  color: white;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow:
+    0 3px 12px rgba(44, 36, 24, 0.28),
+    0 0 0 1px color-mix(in srgb, var(--route-color) 55%, transparent);
+  transition:
+    transform 0.22s cubic-bezier(0.23, 1, 0.32, 1),
+    box-shadow 0.22s ease;
+}
+
+.route-stop-marker__label {
+  position: absolute;
+  top: 34px;
+  left: 50%;
+  min-width: max-content;
+  max-width: 150px;
+  transform: translateX(-50%);
+  overflow: hidden;
+  padding: 3px 8px;
+  border: 1px solid rgba(139, 105, 20, 0.16);
+  border-radius: 4px;
+  background: rgba(255, 253, 248, 0.95);
+  box-shadow: 0 3px 12px rgba(44, 36, 24, 0.1);
+  color: #3d2e0a;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.route-stop-marker.is-active {
+  z-index: 1500 !important;
+}
+
+.route-stop-marker.is-active .route-stop-marker__body {
+  transform: scale(1.2);
+  box-shadow:
+    0 4px 16px rgba(44, 36, 24, 0.32),
+    0 0 0 6px color-mix(in srgb, var(--route-color) 20%, transparent);
+}
+
+.route-stop-marker.is-active .route-stop-marker__label {
+  border-color: transparent;
+  background: #3d2e0a;
+  color: #fffdf8;
+}
+
 /*
  * Leaflet positions .custom-marker with an inline transform. Never animate or
  * override that outer transform: doing so makes markers jump during flyTo.
@@ -346,6 +425,29 @@
 .point-detail-panel > * {
   position: relative;
   z-index: 1;
+}
+
+.route-map-card {
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255, 253, 248, 0.97), rgba(246, 239, 224, 0.94)),
+    rgba(255, 253, 248, 0.96);
+  backdrop-filter: blur(18px);
+  box-shadow:
+    0 12px 32px rgba(44, 36, 24, 0.15),
+    0 1px 0 rgba(255, 255, 255, 0.82) inset;
+}
+
+.route-map-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--route-color);
+}
+
+.route-map-card__progress {
+  padding-left: 42px;
 }
 
 .point-meta-chip {
@@ -543,6 +645,12 @@
 }
 
 @media (max-width: 639px) {
+  .route-stop-marker__label {
+    max-width: 112px;
+    padding: 2px 6px;
+    font-size: 9px;
+  }
+
   .culture-marker__label {
     max-width: 132px;
     min-height: 19px;
